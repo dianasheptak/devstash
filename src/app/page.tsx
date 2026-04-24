@@ -1,3 +1,3 @@
 export default function Home() {
-  return <h1>devstash</h1>;
+  return <h1 className={'text-2xl '}>devstash</h1>;
 }
