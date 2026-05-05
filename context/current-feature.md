@@ -2,7 +2,7 @@
 
 <!-- Feature Name -->
 
-## Dashboard UI Phase 3
+## Prisma + Neon PostgreSQL Setup
 
 ## Status
 
@@ -14,16 +14,22 @@ Completed
 
 <!-- Goals & requirements -->
 
-- 4 stats cards at the top (total items, collections, favorite items, favorite collections)
-- Recent collections section
-- Pinned items section
-- 10 recent items section
+- Set up Prisma 7 ORM with Neon PostgreSQL (serverless)
+- Create initial schema based on data models in `context/project-overview.md`
+- Include NextAuth models (Account, Session, VerificationToken)
+- Add appropriate indexes and cascade deletes
+- Create migration (never push directly to the database)
+- Seed system item types
 
 ## Notes
 
 <!-- Any extra notes -->
 
-Reference: @context/features/dashboard-phase-3-spec.md
+Reference: @context/features/database-spec.md
+
+- Always use `prisma migrate dev` for development migrations — never `prisma db push`
+- Prisma 7 has breaking changes — read the upgrade guide before implementing
+- Dev database uses `DATABASE_URL`, production uses a separate branch
 
 ## History
 
@@ -57,3 +63,12 @@ Reference: @context/features/dashboard-phase-3-spec.md
 - Pinned items section (conditional — renders only when pinned items exist)
 - 10 most recent items grid with type icon/color, description, code preview, and tags
 - Added shadcn Card and Badge components
+
+### 2026-05-05 — Prisma + Neon PostgreSQL Setup
+- Installed Prisma 7, `@prisma/adapter-pg`, `pg`, `dotenv`, `tsx`
+- Created `prisma/schema.prisma` with Prisma 7 generator (`prisma-client`, mandatory output) and full schema: User, Item, ItemType, Collection, ItemCollection, Tag, and NextAuth models
+- Created `prisma.config.ts` with datasource URL, migrations path, and seed command (Prisma 7 pattern)
+- Created `src/lib/prisma.ts` singleton using `PrismaPg` driver adapter (required in Prisma 7)
+- Created `prisma/seed.ts` to seed 7 system item types
+- Created migration `20260505160854_init` and applied to Neon dev branch
+- Seeded system item types successfully
