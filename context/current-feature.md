@@ -2,7 +2,7 @@
 
 <!-- Feature Name -->
 
-## Dashboard UI Phase 2
+## Dashboard UI Phase 3
 
 ## Status
 
@@ -14,19 +14,16 @@ Completed
 
 <!-- Goals & requirements -->
 
-- Collapsible sidebar
-- Items/types with links to /items/TYPE (e.g. /items/snippets)
-- Favorite collections
-- Most recent collections
-- User avatar area at the bottom of the sidebar
-- Drawer icon to open/close sidebar
-- Always a drawer on mobile view
+- 4 stats cards at the top (total items, collections, favorite items, favorite collections)
+- Recent collections section
+- Pinned items section
+- 10 recent items section
 
 ## Notes
 
 <!-- Any extra notes -->
 
-Reference: @context/features/dashboard-phase-2-spec.md
+Reference: @context/features/dashboard-phase-3-spec.md
 
 ## History
 
@@ -53,3 +50,10 @@ Reference: @context/features/dashboard-phase-2-spec.md
 - "Navigation" label left of the collapse icon in the sidebar toggle bar
 - Centered search input in the header
 - Favorite collections moved inside a collapsible "Collections" folder in the sidebar
+
+### 2026-05-05 — Dashboard UI Phase 3
+- Added 4 stats cards at the top (total items, collections, favorite items, favorite collections)
+- Recent collections grid with favorite indicator and item count
+- Pinned items section (conditional — renders only when pinned items exist)
+- 10 most recent items grid with type icon/color, description, code preview, and tags
+- Added shadcn Card and Badge components
