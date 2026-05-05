@@ -2,7 +2,7 @@
 
 <!-- Feature Name -->
 
-## Prisma + Neon PostgreSQL Setup
+## Seed Data
 
 ## Status
 
@@ -14,22 +14,21 @@ Completed
 
 <!-- Goals & requirements -->
 
-- Set up Prisma 7 ORM with Neon PostgreSQL (serverless)
-- Create initial schema based on data models in `context/project-overview.md`
-- Include NextAuth models (Account, Session, VerificationToken)
-- Add appropriate indexes and cascade deletes
-- Create migration (never push directly to the database)
-- Seed system item types
+- Create a demo user (demo@devstash.io, password hashed with bcryptjs 12 rounds)
+- Seed all 7 system item types
+- Seed 5 collections with realistic items:
+  - React Patterns — 3 TypeScript snippets
+  - AI Workflows — 3 prompts
+  - DevOps — 1 snippet, 1 command, 2 links
+  - Terminal Commands — 4 commands
+  - Design Resources — 4 links
+- Overwrite the existing `prisma/seed.ts`
 
 ## Notes
 
 <!-- Any extra notes -->
 
-Reference: @context/features/database-spec.md
-
-- Always use `prisma migrate dev` for development migrations — never `prisma db push`
-- Prisma 7 has breaking changes — read the upgrade guide before implementing
-- Dev database uses `DATABASE_URL`, production uses a separate branch
+Reference: @context/features/seed-spec.md
 
 ## History
 
@@ -63,6 +62,16 @@ Reference: @context/features/database-spec.md
 - Pinned items section (conditional — renders only when pinned items exist)
 - 10 most recent items grid with type icon/color, description, code preview, and tags
 - Added shadcn Card and Badge components
+
+### 2026-05-05 — Seed Data
+- Installed bcryptjs for password hashing
+- Rewrote prisma/seed.ts with demo user (demo@devstash.io, bcrypt 12 rounds) and 5 collections
+- React Patterns: 3 TypeScript snippets (useDebounce, Context provider, utility functions)
+- AI Workflows: 3 prompts (code review, documentation generator, refactoring assistant)
+- DevOps: 1 snippet (Dockerfile), 1 command (deploy chain), 2 links (Docker, GitHub Actions)
+- Terminal Commands: 4 commands (git, docker, process management, npm utilities)
+- Design Resources: 4 links (Tailwind, shadcn/ui, Radix UI, Lucide)
+- Seed is idempotent — cleans demo user data before recreating
 
 ### 2026-05-05 — Prisma + Neon PostgreSQL Setup
 - Installed Prisma 7, `@prisma/adapter-pg`, `pg`, `dotenv`, `tsx`
