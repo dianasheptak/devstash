@@ -61,7 +61,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           )}>
             {!collapsed && (
               <span className="px-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Navigationnow
+                Navigation
               </span>
             )}
             <Button
