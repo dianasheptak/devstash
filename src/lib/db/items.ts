@@ -1,5 +1,41 @@
 import { prisma } from '@/lib/prisma';
 
+export type SidebarItemType = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  count: number;
+};
+
+const ITEM_TYPE_ORDER = ['snippet', 'prompt', 'command', 'note', 'file', 'image', 'link'];
+
+export async function getSystemItemTypes(): Promise<SidebarItemType[]> {
+  const userId = await getDemoUserId();
+
+  const [types, counts] = await Promise.all([
+    prisma.itemType.findMany({
+      where: { isSystem: true },
+      select: { id: true, name: true, icon: true, color: true },
+    }),
+    userId
+      ? prisma.item.groupBy({
+          by: ['itemTypeId'],
+          where: { userId },
+          _count: { id: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const countMap = Object.fromEntries(
+    counts.map((c) => [c.itemTypeId, c._count.id])
+  );
+
+  return types
+    .sort((a, b) => ITEM_TYPE_ORDER.indexOf(a.name) - ITEM_TYPE_ORDER.indexOf(b.name))
+    .map((t) => ({ ...t, count: countMap[t.id] ?? 0 }));
+}
+
 export type ItemWithMeta = {
   id: string;
   title: string;

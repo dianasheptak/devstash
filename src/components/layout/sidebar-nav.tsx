@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Star,
-  Clock,
   LayoutGrid,
   Settings,
   Code,
@@ -18,9 +17,11 @@ import {
   ChevronDown,
   type LucideIcon,
 } from 'lucide-react';
-import { mockItemTypes, mockCollections, mockUser } from '@/lib/mock-data';
+import { mockUser } from '@/lib/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import type { SidebarItemType } from '@/lib/db/items';
+import type { SidebarCollection } from '@/lib/db/collections';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Code,
@@ -99,14 +100,18 @@ function SectionLabel({
   );
 }
 
-export function SidebarNav({ collapsed }: { collapsed: boolean }) {
+type Props = {
+  collapsed: boolean;
+  itemTypes: SidebarItemType[];
+  collections: SidebarCollection[];
+};
+
+export function SidebarNav({ collapsed, itemTypes, collections }: Props) {
   const pathname = usePathname();
   const [collectionsOpen, setCollectionsOpen] = useState(true);
 
-  const favoriteCollections = mockCollections.filter((c) => c.isFavorite);
-  const recentCollections = mockCollections
-    .filter((c) => !c.isFavorite)
-    .slice(0, 3);
+  const favoriteCollections = collections.filter((c) => c.isFavorite);
+  const recentCollections = collections.filter((c) => !c.isFavorite).slice(0, 3);
 
   const initials = mockUser.name
     .split(' ')
@@ -127,13 +132,6 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
           collapsed={collapsed}
           currentPath={pathname}
         />
-        <NavItem
-          href="/dashboard/recent"
-          icon={<Clock className="size-4" />}
-          label="Recent"
-          collapsed={collapsed}
-          currentPath={pathname}
-        />
 
         {/* Types */}
         <SectionLabel label="Types" collapsed={collapsed} />
@@ -144,7 +142,7 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
           collapsed={collapsed}
           currentPath={pathname}
         />
-        {mockItemTypes.map((type) => {
+        {itemTypes.map((type) => {
           const Icon = ICON_MAP[type.icon];
           return (
             <NavItem
@@ -154,6 +152,7 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
               label={type.name.charAt(0).toUpperCase() + type.name.slice(1)}
               collapsed={collapsed}
               color={type.color}
+              count={type.count}
               currentPath={pathname}
             />
           );
@@ -198,7 +197,12 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
                   <NavItem
                     key={col.id}
                     href={`/collections/${col.id}`}
-                    icon={<Clock className="size-4" />}
+                    icon={
+                      <span
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: col.dominantColor }}
+                      />
+                    }
                     label={col.name}
                     collapsed={collapsed}
                     count={col.itemCount}
@@ -206,6 +210,15 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
                   />
                 ))}
               </>
+            )}
+
+            {!collapsed && (
+              <Link
+                href="/collections"
+                className="block px-3 py-2 mt-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View all collections →
+              </Link>
             )}
           </>
         )}

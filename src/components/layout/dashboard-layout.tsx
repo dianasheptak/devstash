@@ -7,8 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SidebarNav } from './sidebar-nav';
 import { cn } from '@/lib/utils';
+import type { SidebarItemType } from '@/lib/db/items';
+import type { SidebarCollection } from '@/lib/db/collections';
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+type Props = {
+  children: React.ReactNode;
+  itemTypes: SidebarItemType[];
+  collections: SidebarCollection[];
+};
+
+export function DashboardLayout({ children, itemTypes, collections }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -79,14 +87,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex-1 overflow-hidden flex flex-col">
-            <SidebarNav collapsed={collapsed} />
+            <SidebarNav collapsed={collapsed} itemTypes={itemTypes} collections={collections} />
           </div>
         </aside>
 
         {/* Mobile drawer */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="p-0 flex flex-col">
-            <SidebarNav collapsed={false} />
+            <SidebarNav collapsed={false} itemTypes={itemTypes} collections={collections} />
           </SheetContent>
         </Sheet>
 

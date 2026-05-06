@@ -2,31 +2,19 @@
 
 <!-- Feature Name -->
 
-## Dashboard Items — Real Data
-
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+Not Started
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Replace mock item data in the dashboard main area with real data from Neon via Prisma
-- Create `src/lib/db/items.ts` with data fetching functions
-- Fetch items directly in the dashboard server component
-- Item card icon/border derived from the item type
-- Display item type tags and all currently shown fields
-- If there are no pinned items, nothing should display in the Pinned Items section
-- Update collection stats display (total items, favorite items)
-
 ## Notes
 
 <!-- Any extra notes -->
-
-Reference: @context/features/dashboard-items-spec.md
 
 ## History
 
@@ -61,12 +49,14 @@ Reference: @context/features/dashboard-items-spec.md
 - 10 most recent items grid with type icon/color, description, code preview, and tags
 - Added shadcn Card and Badge components
 
-### 2026-05-06 — Dashboard Collections — Real Data
-- Created `src/lib/db/collections.ts` with `getRecentCollections()` and `getCollectionStats()`
-- `getRecentCollections()` fetches 6 most recent collections with items and types included, computes dominant type color and unique type icons per collection
-- Dashboard page made async server component with `force-dynamic` to prevent stale static caching
-- CollectionCard updated with colored `border-l-[3px]` from dominant type and small type icons in card footer
-- Collections and Favorite Collections stat cards now use real DB counts
+### 2026-05-05 — Prisma + Neon PostgreSQL Setup
+- Installed Prisma 7, `@prisma/adapter-pg`, `pg`, `dotenv`, `tsx`
+- Created `prisma/schema.prisma` with Prisma 7 generator (`prisma-client`, mandatory output) and full schema: User, Item, ItemType, Collection, ItemCollection, Tag, and NextAuth models
+- Created `prisma.config.ts` with datasource URL, migrations path, and seed command (Prisma 7 pattern)
+- Created `src/lib/prisma.ts` singleton using `PrismaPg` driver adapter (required in Prisma 7)
+- Created `prisma/seed.ts` to seed 7 system item types
+- Created migration `20260505160854_init` and applied to Neon dev branch
+- Seeded system item types successfully
 
 ### 2026-05-05 — Seed Data
 - Installed bcryptjs for password hashing
@@ -78,6 +68,13 @@ Reference: @context/features/dashboard-items-spec.md
 - Design Resources: 4 links (Tailwind, shadcn/ui, Radix UI, Lucide)
 - Seed is idempotent — cleans demo user data before recreating
 
+### 2026-05-06 — Dashboard Collections — Real Data
+- Created `src/lib/db/collections.ts` with `getRecentCollections()` and `getCollectionStats()`
+- `getRecentCollections()` fetches 6 most recent collections with items and types included, computes dominant type color and unique type icons per collection
+- Dashboard page made async server component with `force-dynamic` to prevent stale static caching
+- CollectionCard updated with colored `border-l-[3px]` from dominant type and small type icons in card footer
+- Collections and Favorite Collections stat cards now use real DB counts
+
 ### 2026-05-06 — Dashboard Items — Real Data
 - Created `src/lib/db/items.ts` with `getPinnedItems()`, `getRecentItems()`, and `getItemStats()`
 - All three functions scope to the demo user and include `itemType` and `tags` relations
@@ -85,11 +82,13 @@ Reference: @context/features/dashboard-items-spec.md
 - Removed `mockItems` dependency from dashboard page; Total Items and Favorite Items stats now use real DB counts
 - `ItemCard` component updated to accept `ItemWithMeta` type (tags as `string[]`)
 
-### 2026-05-05 — Prisma + Neon PostgreSQL Setup
-- Installed Prisma 7, `@prisma/adapter-pg`, `pg`, `dotenv`, `tsx`
-- Created `prisma/schema.prisma` with Prisma 7 generator (`prisma-client`, mandatory output) and full schema: User, Item, ItemType, Collection, ItemCollection, Tag, and NextAuth models
-- Created `prisma.config.ts` with datasource URL, migrations path, and seed command (Prisma 7 pattern)
-- Created `src/lib/prisma.ts` singleton using `PrismaPg` driver adapter (required in Prisma 7)
-- Created `prisma/seed.ts` to seed 7 system item types
-- Created migration `20260505160854_init` and applied to Neon dev branch
-- Seeded system item types successfully
+### 2026-05-06 — Stats & Sidebar — Real Data
+- Added `getSidebarCollections()` to `src/lib/db/collections.ts` — returns collections with `dominantColor` from most-used item type
+- Added `getSystemItemTypes()` to `src/lib/db/items.ts` — fetches system types in display order with per-type item counts via `groupBy`
+- Converted `src/app/dashboard/layout.tsx` to async server component; fetches item types + sidebar collections in parallel and passes as props
+- Updated `DashboardLayout` to accept and forward `itemTypes` and `collections` props to both desktop and mobile `SidebarNav`
+- Replaced `mockItemTypes` and `mockCollections` in `SidebarNav` with real props
+- Recent collections show a colored circle (dominant type color) instead of a clock icon
+- Each item type in the sidebar shows its item count on the right
+- Restored Favorites quick-access link in the sidebar
+- Added "View all collections →" link below the sidebar collections list

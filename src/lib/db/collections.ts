@@ -68,6 +68,55 @@ export async function getRecentCollections(limit = 6): Promise<CollectionWithMet
   });
 }
 
+export type SidebarCollection = {
+  id: string;
+  name: string;
+  isFavorite: boolean;
+  itemCount: number;
+  dominantColor: string;
+};
+
+export async function getSidebarCollections(limit = 20): Promise<SidebarCollection[]> {
+  const userId = await getDemoUserId();
+  if (!userId) return [];
+
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      items: {
+        include: {
+          item: {
+            include: { itemType: { select: { id: true, color: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  return collections.map((col) => {
+    const itemTypes = col.items.map((ic) => ic.item.itemType);
+    const typeCounts = itemTypes.reduce<Record<string, { count: number; color: string }>>(
+      (acc, t) => {
+        if (!acc[t.id]) acc[t.id] = { count: 0, color: t.color };
+        acc[t.id].count++;
+        return acc;
+      },
+      {}
+    );
+    const dominantEntry = Object.values(typeCounts).sort((a, b) => b.count - a.count)[0];
+
+    return {
+      id: col.id,
+      name: col.name,
+      isFavorite: col.isFavorite,
+      itemCount: col.items.length,
+      dominantColor: dominantEntry?.color ?? 'hsl(var(--border))',
+    };
+  });
+}
+
 export async function getCollectionStats(): Promise<{ total: number; favorites: number }> {
   const userId = await getDemoUserId();
   if (!userId) return { total: 0, favorites: 0 };
