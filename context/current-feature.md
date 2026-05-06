@@ -2,11 +2,17 @@
 
 ## Status
 
-Not Started
+Completed
 
 ## Goals
 
+- Extract `SectionHeading`, `ItemCard`, `CollectionCard` from `dashboard/page.tsx` into dedicated component files
+- Move shared `ICON_MAP` constant out of both `page.tsx` and `sidebar-nav.tsx` into `src/lib/constants/item-types.ts`
+- Fix `ml-auto` collision on `ItemCard` when an item is both favorited and pinned
+
 ## Notes
+
+Quick wins from code audit. No logic changes — pure extraction and one layout fix.
 
 ## History
 
@@ -84,6 +90,14 @@ Not Started
 - Each item type in the sidebar shows its item count on the right
 - Restored Favorites quick-access link in the sidebar
 - Added "View all collections →" link below the sidebar collections list
+
+### 2026-05-06 — Component Extraction + Code Quality Quick Wins
+- Moved shared `ICON_MAP` constant to `src/lib/constants/item-types.ts` — removed duplication from `page.tsx` and `sidebar-nav.tsx`
+- Extracted `SectionHeading` → `src/components/shared/section-heading.tsx`
+- Extracted `ItemCard` → `src/components/items/item-card.tsx`
+- Extracted `CollectionCard` → `src/components/collections/collection-card.tsx`
+- Fixed `ml-auto` collision in `ItemCard` — Star + Pin icons now share a single `ml-auto` wrapper so they render side-by-side correctly when an item is both favorited and pinned
+- `dashboard/page.tsx` reduced from 200 lines to 70 — now only data-fetching and layout
 
 ### 2026-05-06 — Pro Badge in Sidebar + Header Buttons
 - Added `isPro` prop to `NavItem` in `sidebar-nav.tsx`; renders a subtle shadcn `Badge` (secondary, dimmed) with uppercase "PRO" text next to Files and Images types
