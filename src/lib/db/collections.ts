@@ -1,0 +1,81 @@
+import { prisma } from '@/lib/prisma';
+
+export type CollectionWithMeta = {
+  id: string;
+  name: string;
+  description: string | null;
+  isFavorite: boolean;
+  itemCount: number;
+  types: Array<{ name: string; icon: string; color: string }>;
+  dominantColor: string;
+};
+
+// TODO: replace hardcoded email with session user after auth is set up
+async function getDemoUserId(): Promise<string | null> {
+  const user = await prisma.user.findUnique({
+    where: { email: 'demo@devstash.io' },
+    select: { id: true },
+  });
+  return user?.id ?? null;
+}
+
+export async function getRecentCollections(limit = 6): Promise<CollectionWithMeta[]> {
+  const userId = await getDemoUserId();
+  if (!userId) return [];
+
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      items: {
+        include: {
+          item: {
+            include: { itemType: true },
+          },
+        },
+      },
+    },
+  });
+
+  return collections.map((col) => {
+    const itemTypes = col.items.map((ic) => ic.item.itemType);
+
+    const uniqueTypes = Array.from(
+      new Map(itemTypes.map((t) => [t.id, t])).values()
+    );
+
+    const typeCounts = itemTypes.reduce<Record<string, number>>((acc, t) => {
+      acc[t.id] = (acc[t.id] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const dominantTypeId = Object.entries(typeCounts)
+      .sort((a, b) => b[1] - a[1])[0]?.[0];
+
+    const dominantColor =
+      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? 'hsl(var(--border))';
+
+    return {
+      id: col.id,
+      name: col.name,
+      description: col.description,
+      isFavorite: col.isFavorite,
+      itemCount: col.items.length,
+      types: uniqueTypes.map((t) => ({ name: t.name, icon: t.icon, color: t.color })),
+      dominantColor,
+    };
+  });
+}
+
+export async function getCollectionStats(): Promise<{ total: number; favorites: number }> {
+  const userId = await getDemoUserId();
+  if (!userId) return { total: 0, favorites: 0 };
+
+  const [total, favorites] = await Promise.all([
+    prisma.collection.count({ where: { userId } }),
+    prisma.collection.count({ where: { userId, isFavorite: true } }),
+  ]);
+
+  return { total, favorites };
+}

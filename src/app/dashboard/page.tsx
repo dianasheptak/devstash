@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import {
   Code,
@@ -13,7 +15,8 @@ import {
   FolderOpen,
   type LucideIcon,
 } from 'lucide-react';
-import { mockItems, mockCollections } from '@/lib/mock-data';
+import { mockItems } from '@/lib/mock-data';
+import { getRecentCollections, getCollectionStats, type CollectionWithMeta } from '@/lib/db/collections';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -26,27 +29,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Image,
   Link: LinkIcon,
 };
-
-const totalItems = mockItems.length;
-const totalCollections = mockCollections.length;
-const favoriteItems = mockItems.filter((i) => i.isFavorite).length;
-const favoriteCollections = mockCollections.filter((c) => c.isFavorite).length;
-
-const recentCollections = [...mockCollections]
-  .slice(0, 4);
-
-const pinnedItems = mockItems.filter((i) => i.isPinned);
-
-const recentItems = [...mockItems]
-  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  .slice(0, 10);
-
-const stats = [
-  { label: 'Total Items', value: totalItems, icon: LayoutGrid },
-  { label: 'Collections', value: totalCollections, icon: FolderOpen },
-  { label: 'Favorite Items', value: favoriteItems, icon: Star },
-  { label: 'Favorite Collections', value: favoriteCollections, icon: Star },
-];
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -68,10 +50,7 @@ function ItemCard({ item }: { item: (typeof mockItems)[number] }) {
       <CardHeader className="border-b">
         <div className="flex items-center gap-2">
           {Icon && (
-            <span
-              className="size-4 shrink-0"
-              style={{ color: item.itemType.color }}
-            >
+            <span className="size-4 shrink-0" style={{ color: item.itemType.color }}>
               <Icon className="size-4" />
             </span>
           )}
@@ -107,10 +86,14 @@ function ItemCard({ item }: { item: (typeof mockItems)[number] }) {
   );
 }
 
-function CollectionCard({ col }: { col: (typeof mockCollections)[number] }) {
+function CollectionCard({ col }: { col: CollectionWithMeta }) {
   return (
     <Link href={`/collections/${col.id}`}>
-      <Card size="sm" className="hover:ring-foreground/20 transition-shadow cursor-pointer h-full">
+      <Card
+        size="sm"
+        className="hover:ring-foreground/20 transition-shadow cursor-pointer h-full border-l-[3px]"
+        style={{ borderLeftColor: col.dominantColor }}
+      >
         <CardHeader>
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="truncate">{col.name}</CardTitle>
@@ -122,17 +105,49 @@ function CollectionCard({ col }: { col: (typeof mockCollections)[number] }) {
             <CardDescription className="line-clamp-2">{col.description}</CardDescription>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
             {col.itemCount} {col.itemCount === 1 ? 'item' : 'items'}
           </span>
+          {col.types.length > 0 && (
+            <div className="flex items-center gap-1">
+              {col.types.map((type) => {
+                const Icon = ICON_MAP[type.icon];
+                return Icon ? (
+                  <Icon
+                    key={type.name}
+                    className="size-3"
+                    style={{ color: type.color }}
+                    aria-label={type.name}
+                  />
+                ) : null;
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>
   );
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [recentCollections, collectionStats] = await Promise.all([
+    getRecentCollections(),
+    getCollectionStats(),
+  ]);
+
+  const pinnedItems = mockItems.filter((i) => i.isPinned);
+  const recentItems = [...mockItems]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
+
+  const stats = [
+    { label: 'Total Items', value: mockItems.length, icon: LayoutGrid },
+    { label: 'Collections', value: collectionStats.total, icon: FolderOpen },
+    { label: 'Favorite Items', value: mockItems.filter((i) => i.isFavorite).length, icon: Star },
+    { label: 'Favorite Collections', value: collectionStats.favorites, icon: Star },
+  ];
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       {/* Stats */}
@@ -153,7 +168,7 @@ export default function DashboardPage() {
       {/* Recent Collections */}
       <section>
         <SectionHeading>Recent Collections</SectionHeading>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {recentCollections.map((col) => (
             <CollectionCard key={col.id} col={col} />
           ))}
