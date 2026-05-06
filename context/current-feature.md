@@ -2,31 +2,31 @@
 
 <!-- Feature Name -->
 
-## Dashboard Collections — Real Data
+## Dashboard Items — Real Data
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Replace mock collection data in the dashboard main area with real data from Neon via Prisma
-- Create `src/lib/db/collections.ts` with data fetching functions
-- Fetch collections directly in a server component
-- Collection card border color derived from the most-used content type in that collection
-- Show small icons of all item types present in that collection
-- Keep the current design (6 recent collection cards)
-- Do NOT add items underneath — that comes later
+- Replace mock item data in the dashboard main area with real data from Neon via Prisma
+- Create `src/lib/db/items.ts` with data fetching functions
+- Fetch items directly in the dashboard server component
+- Item card icon/border derived from the item type
+- Display item type tags and all currently shown fields
+- If there are no pinned items, nothing should display in the Pinned Items section
+- Update collection stats display (total items, favorite items)
 
 ## Notes
 
 <!-- Any extra notes -->
 
-Reference: @context/features/dashboard-collections-spec.md
+Reference: @context/features/dashboard-items-spec.md
 
 ## History
 
@@ -61,6 +61,13 @@ Reference: @context/features/dashboard-collections-spec.md
 - 10 most recent items grid with type icon/color, description, code preview, and tags
 - Added shadcn Card and Badge components
 
+### 2026-05-06 — Dashboard Collections — Real Data
+- Created `src/lib/db/collections.ts` with `getRecentCollections()` and `getCollectionStats()`
+- `getRecentCollections()` fetches 6 most recent collections with items and types included, computes dominant type color and unique type icons per collection
+- Dashboard page made async server component with `force-dynamic` to prevent stale static caching
+- CollectionCard updated with colored `border-l-[3px]` from dominant type and small type icons in card footer
+- Collections and Favorite Collections stat cards now use real DB counts
+
 ### 2026-05-05 — Seed Data
 - Installed bcryptjs for password hashing
 - Rewrote prisma/seed.ts with demo user (demo@devstash.io, bcrypt 12 rounds) and 5 collections
@@ -70,6 +77,13 @@ Reference: @context/features/dashboard-collections-spec.md
 - Terminal Commands: 4 commands (git, docker, process management, npm utilities)
 - Design Resources: 4 links (Tailwind, shadcn/ui, Radix UI, Lucide)
 - Seed is idempotent — cleans demo user data before recreating
+
+### 2026-05-06 — Dashboard Items — Real Data
+- Created `src/lib/db/items.ts` with `getPinnedItems()`, `getRecentItems()`, and `getItemStats()`
+- All three functions scope to the demo user and include `itemType` and `tags` relations
+- Dashboard page now fetches all five data sources in parallel via `Promise.all`
+- Removed `mockItems` dependency from dashboard page; Total Items and Favorite Items stats now use real DB counts
+- `ItemCard` component updated to accept `ItemWithMeta` type (tags as `string[]`)
 
 ### 2026-05-05 — Prisma + Neon PostgreSQL Setup
 - Installed Prisma 7, `@prisma/adapter-pg`, `pg`, `dotenv`, `tsx`
