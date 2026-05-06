@@ -8,7 +8,7 @@
 
 <!-- Not Started|In Progress|Completed -->
 
-In Progress
+Completed
 
 ## Goals
 
@@ -60,6 +60,13 @@ Reference: @context/features/dashboard-collections-spec.md
 - Pinned items section (conditional — renders only when pinned items exist)
 - 10 most recent items grid with type icon/color, description, code preview, and tags
 - Added shadcn Card and Badge components
+
+### 2026-05-06 — Dashboard Collections — Real Data
+- Created `src/lib/db/collections.ts` with `getRecentCollections()` and `getCollectionStats()`
+- `getRecentCollections()` fetches 6 most recent collections with items and types included, computes dominant type color and unique type icons per collection
+- Dashboard page made async server component with `force-dynamic` to prevent stale static caching
+- CollectionCard updated with colored `border-l-[3px]` from dominant type and small type icons in card footer
+- Collections and Favorite Collections stat cards now use real DB counts
 
 ### 2026-05-05 — Seed Data
 - Installed bcryptjs for password hashing
