@@ -2,33 +2,31 @@
 
 <!-- Feature Name -->
 
-## Seed Data
+## Dashboard Collections — Real Data
 
 ## Status
 
 <!-- Not Started|In Progress|Completed -->
 
-Completed
+In Progress
 
 ## Goals
 
 <!-- Goals & requirements -->
 
-- Create a demo user (demo@devstash.io, password hashed with bcryptjs 12 rounds)
-- Seed all 7 system item types
-- Seed 5 collections with realistic items:
-  - React Patterns — 3 TypeScript snippets
-  - AI Workflows — 3 prompts
-  - DevOps — 1 snippet, 1 command, 2 links
-  - Terminal Commands — 4 commands
-  - Design Resources — 4 links
-- Overwrite the existing `prisma/seed.ts`
+- Replace mock collection data in the dashboard main area with real data from Neon via Prisma
+- Create `src/lib/db/collections.ts` with data fetching functions
+- Fetch collections directly in a server component
+- Collection card border color derived from the most-used content type in that collection
+- Show small icons of all item types present in that collection
+- Keep the current design (6 recent collection cards)
+- Do NOT add items underneath — that comes later
 
 ## Notes
 
 <!-- Any extra notes -->
 
-Reference: @context/features/seed-spec.md
+Reference: @context/features/dashboard-collections-spec.md
 
 ## History
 
