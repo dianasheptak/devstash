@@ -15,8 +15,8 @@ import {
   FolderOpen,
   type LucideIcon,
 } from 'lucide-react';
-import { mockItems } from '@/lib/mock-data';
 import { getRecentCollections, getCollectionStats, type CollectionWithMeta } from '@/lib/db/collections';
+import { getPinnedItems, getRecentItems, getItemStats, type ItemWithMeta } from '@/lib/db/items';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -38,7 +38,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ItemCard({ item }: { item: (typeof mockItems)[number] }) {
+function ItemCard({ item }: { item: ItemWithMeta }) {
   const Icon = ICON_MAP[item.itemType.icon];
   const preview =
     item.contentType === 'URL'
@@ -131,20 +131,19 @@ function CollectionCard({ col }: { col: CollectionWithMeta }) {
 }
 
 export default async function DashboardPage() {
-  const [recentCollections, collectionStats] = await Promise.all([
-    getRecentCollections(),
-    getCollectionStats(),
-  ]);
-
-  const pinnedItems = mockItems.filter((i) => i.isPinned);
-  const recentItems = [...mockItems]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10);
+  const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
+    await Promise.all([
+      getRecentCollections(),
+      getCollectionStats(),
+      getPinnedItems(),
+      getRecentItems(),
+      getItemStats(),
+    ]);
 
   const stats = [
-    { label: 'Total Items', value: mockItems.length, icon: LayoutGrid },
+    { label: 'Total Items', value: itemStats.total, icon: LayoutGrid },
     { label: 'Collections', value: collectionStats.total, icon: FolderOpen },
-    { label: 'Favorite Items', value: mockItems.filter((i) => i.isFavorite).length, icon: Star },
+    { label: 'Favorite Items', value: itemStats.favorites, icon: Star },
     { label: 'Favorite Collections', value: collectionStats.favorites, icon: Star },
   ];
 
