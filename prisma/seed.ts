@@ -352,7 +352,7 @@ CMD ["node", "server.js"]`,
   await prisma.collection.create({
     data: {
       name: "Terminal Commands",
-      description: "Useful shell commands for everyday development",
+      description: "Useful shell skills for everyday development",
       userId: user.id,
       items: {
         create: [

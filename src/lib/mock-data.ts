@@ -41,7 +41,7 @@ export const mockCollections = [
   {
     id: 'col_4',
     name: 'Terminal Commands',
-    description: 'Frequently used CLI commands',
+    description: 'Frequently used CLI skills',
     isFavorite: false,
     itemCount: 0,
   },
