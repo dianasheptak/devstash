@@ -45,8 +45,12 @@ export function DashboardLayout({ children, itemTypes, collections }: Props) {
           </div>
         </div>
 
-        {/* Right: new item button */}
-        <div className="ml-auto shrink-0">
+        {/* Right: action buttons */}
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          <Button size="sm" variant="outline">
+            <Plus className="size-4" />
+            New Collection
+          </Button>
           <Button size="sm">
             <Plus className="size-4" />
             New Item

@@ -1,20 +1,12 @@
 # Current Feature
 
-<!-- Feature Name -->
-
 ## Status
-
-<!-- Not Started|In Progress|Completed -->
 
 Not Started
 
 ## Goals
 
-<!-- Goals & requirements -->
-
 ## Notes
-
-<!-- Any extra notes -->
 
 ## History
 
@@ -92,3 +84,8 @@ Not Started
 - Each item type in the sidebar shows its item count on the right
 - Restored Favorites quick-access link in the sidebar
 - Added "View all collections →" link below the sidebar collections list
+
+### 2026-05-06 — Pro Badge in Sidebar + Header Buttons
+- Added `isPro` prop to `NavItem` in `sidebar-nav.tsx`; renders a subtle shadcn `Badge` (secondary, dimmed) with uppercase "PRO" text next to Files and Images types
+- Fixed Collections toggle: added `type="button"` and functional updater to resolve collapse not toggling on click
+- Added "New Collection" outline button to the dashboard header alongside the existing "New Item" button

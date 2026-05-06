@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { mockUser } from '@/lib/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
@@ -40,6 +41,7 @@ function NavItem({
   collapsed,
   color,
   count,
+  isPro,
   currentPath,
 }: {
   href: string;
@@ -48,6 +50,7 @@ function NavItem({
   collapsed: boolean;
   color?: string;
   count?: number;
+  isPro?: boolean;
   currentPath: string;
 }) {
   const isActive =
@@ -74,6 +77,11 @@ function NavItem({
       {!collapsed && (
         <>
           <span className="flex-1 truncate">{label}</span>
+          {isPro && (
+            <Badge variant="secondary" className="h-4 px-1.5 text-[10px] font-medium opacity-60 tracking-wide">
+              PRO
+            </Badge>
+          )}
           {count !== undefined && (
             <span className="text-xs text-muted-foreground tabular-nums">
               {count}
@@ -144,6 +152,7 @@ export function SidebarNav({ collapsed, itemTypes, collections }: Props) {
         />
         {itemTypes.map((type) => {
           const Icon = ICON_MAP[type.icon];
+          const isPro = type.name === 'file' || type.name === 'image';
           return (
             <NavItem
               key={type.id}
@@ -153,6 +162,7 @@ export function SidebarNav({ collapsed, itemTypes, collections }: Props) {
               collapsed={collapsed}
               color={type.color}
               count={type.count}
+              isPro={isPro}
               currentPath={pathname}
             />
           );
@@ -161,7 +171,8 @@ export function SidebarNav({ collapsed, itemTypes, collections }: Props) {
         {/* Collections (collapsible) */}
         {!collapsed ? (
           <button
-            onClick={() => setCollectionsOpen(!collectionsOpen)}
+            type="button"
+            onClick={() => setCollectionsOpen((prev) => !prev)}
             className="flex items-center gap-1 w-full px-3 pt-4 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
           >
             <ChevronDown
