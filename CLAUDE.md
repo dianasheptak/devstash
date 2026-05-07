@@ -22,6 +22,14 @@ npm run lint     # Run ESLint
 
 No test framework is configured.
 
+## Neon Database
+
+When using the Neon MCP tools, always use:
+- **Project:** `devstash` (ID: `floral-scene-91409912`)
+- **Branch:** `development` (ID: `br-solitary-queen-amhu8vr9`)
+
+Never query or modify the `production` branch unless explicitly told to do so.
+
 ## Stack
 
 - **Next.js 16.2.4** with App Router — see AGENTS.md warning about breaking changes
