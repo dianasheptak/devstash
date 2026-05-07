@@ -23,9 +23,11 @@ export async function getRecentCollections(limit = 6): Promise<CollectionWithMet
   const userId = await getDemoUserId();
   if (!userId) return [];
 
+  const safeLimit = Math.min(Math.max(1, limit), 20);
+
   const collections = await prisma.collection.findMany({
     where: { userId },
-    take: limit,
+    take: safeLimit,
     orderBy: { createdAt: 'desc' },
     include: {
       items: {
@@ -80,9 +82,11 @@ export async function getSidebarCollections(limit = 20): Promise<SidebarCollecti
   const userId = await getDemoUserId();
   if (!userId) return [];
 
+  const safeLimit = Math.min(Math.max(1, limit), 50);
+
   const collections = await prisma.collection.findMany({
     where: { userId },
-    take: limit,
+    take: safeLimit,
     orderBy: { createdAt: 'desc' },
     include: {
       items: {

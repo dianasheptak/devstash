@@ -95,12 +95,15 @@ const itemInclude = {
   tags: { select: { name: true } },
 } as const;
 
-export async function getPinnedItems(): Promise<ItemWithMeta[]> {
+export async function getPinnedItems(limit = 20): Promise<ItemWithMeta[]> {
   const userId = await getDemoUserId();
   if (!userId) return [];
 
+  const safeLimit = Math.min(Math.max(1, limit), 50);
+
   const items = await prisma.item.findMany({
     where: { userId, isPinned: true },
+    take: safeLimit,
     orderBy: { updatedAt: 'desc' },
     include: itemInclude,
   });
@@ -112,9 +115,11 @@ export async function getRecentItems(limit = 10): Promise<ItemWithMeta[]> {
   const userId = await getDemoUserId();
   if (!userId) return [];
 
+  const safeLimit = Math.min(Math.max(1, limit), 50);
+
   const items = await prisma.item.findMany({
     where: { userId },
-    take: limit,
+    take: safeLimit,
     orderBy: { createdAt: 'desc' },
     include: itemInclude,
   });
