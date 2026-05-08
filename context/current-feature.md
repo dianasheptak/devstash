@@ -1,34 +1,12 @@
-# Current Feature: Forgot Password
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add "Forgot password?" link on the sign-in page
-- Build a request flow where the user enters their email and receives a reset link
-- Build a reset flow where the user clicks the link, enters a new password, and signs in
-- Reuse the existing `VerificationToken` model to store password reset tokens (sha256-hashed, single-use, short TTL)
-- Send the reset email via the existing Resend integration
-- Do not leak whether an email exists (generic success response on request)
-
 ## Notes
-
-- Token storage pattern should mirror the email verification flow in [src/lib/auth/verification-token.ts](src/lib/auth/verification-token.ts): 32 random bytes, sha256-hashed before storing in `VerificationToken.token`, single-use, with a TTL (suggest ~1h for password resets, shorter than the 24h verification window)
-- Reuse the Resend client + sender config from [src/lib/email/resend.ts](src/lib/email/resend.ts); add a `sendPasswordResetEmail()` helper alongside `sendVerificationEmail()`
-- Differentiate password reset tokens from verification tokens — likely via an `identifier` prefix (e.g. `pwreset:<email>`) so the same table can hold both without collisions
-- New routes:
-  - `POST /api/auth/forgot-password` — accepts `{ email }`, always returns generic OK, issues token + sends email when the user exists
-  - `GET /reset-password?token=...` — page that shows the new-password form (or an "invalid/expired" state)
-  - `POST /api/auth/reset-password` — accepts `{ token, password, confirmPassword }`, consumes the token, updates `User.password` (bcrypt 12 rounds, matching register flow), invalidates other sessions if feasible
-- New pages:
-  - `/forgot-password` — email entry form, mirrors the dark sign-in/register UI
-  - `/reset-password` — new password form, with the same validation rules as register (≥8 chars, match check)
-- Sign-in form: add a "Forgot password?" link near the password field, linking to `/forgot-password`
-- Toasts: success on email-sent, success on password-reset, error states for expired/invalid token
-- Apply the same anti-autofill defenses on the reset form as the sign-in form already uses
-- Out of scope: rate limiting beyond a simple cooldown, 2FA, account lockout
 
 ## History
 
@@ -168,3 +146,13 @@ In Progress
 - `src/auth.ts` credentials `authorize` — `emailVerified` check now gated behind `isEmailVerificationEnabled()`, so existing unverified users can sign in immediately when the flag is flipped off
 - `POST /api/auth/resend-verification` — short-circuits to generic `{ ok: true }` when the flag is disabled, so the endpoint reveals nothing about the flag's state
 - No code/DB changes required to flip — set `EMAIL_VERIFICATION_ENABLED=false` in `.env` and restart. Resend stays in the codebase as a runtime switch, not a removal
+
+### 2026-05-08 — Forgot Password Flow
+- `src/lib/auth/password-reset-token.ts` — `createPasswordResetToken`, `consumePasswordResetToken`, `canResendPasswordReset`. 32 random bytes, **stored as sha256 hashes** in `VerificationToken.token`, single-use, 1h TTL, 60s cooldown. Identifier prefixed with `pwreset:` to share the table with verification tokens; consume rejects rows whose identifier doesn't carry the prefix
+- `sendPasswordResetEmail()` added to `src/lib/email/resend.ts` — reuses Resend client + `EMAIL_FROM`; subject "Reset your DevStash password"; HTML + text body
+- `POST /api/auth/forgot-password` — generic `{ ok: true }` for unknown emails or users without a password (no enumeration, no account-takeover for OAuth-only accounts), 429 on cooldown, 500 if Resend send fails
+- `POST /api/auth/reset-password` — validates `password` ≥8 chars + match, consumes token, `bcrypt.hash(password, 12)`, invalidates all other DB sessions for the user (`prisma.session.deleteMany`), returns `{ ok: true }` or `{ error, reason: "invalid"|"expired" }`
+- `/forgot-password` page (server component, redirects to `/dashboard` if authed) + `ForgotPasswordForm` — email validation, post-submit "If an account exists for X, we've sent…" confirmation card + back-to-sign-in link
+- `/reset-password` page + `ResetPasswordForm` — reads `?token=` from URL, missing-token state with link to `/forgot-password`, anti-autofill (refs + `autoComplete="off"` form + 50ms post-mount DOM `.value` clear) matching sign-in flow, success → `/sign-in?reset=success`, expired/invalid → `/sign-in?reset=expired|invalid`
+- `sign-in-form.tsx` — added "Forgot password?" link beside the password label, plus `?reset=success|expired|invalid` toasts (alongside the existing `?registered=1` and `?verify=*` toasts)
+- No DB migration — reuses the existing `VerificationToken` table via the `pwreset:` identifier prefix
