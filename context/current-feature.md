@@ -1,4 +1,4 @@
-# Current Feature: Email Verification Feature Flag
+# Current Feature: Forgot Password
 
 ## Status
 
@@ -6,24 +6,29 @@ In Progress
 
 ## Goals
 
-- One env variable, `EMAIL_VERIFICATION_ENABLED`, controls whether new users must verify their email before signing in
-- When `true` (default): existing flow — token issued, email sent via Resend, user lands on `/verify-email`, credentials sign-in blocked until verified
-- When `false`: skip Resend entirely on register, auto-set `User.emailVerified` to "now" on user creation, redirect register flow straight to `/sign-in?registered=1`, and credentials `authorize` does not enforce the `emailVerified` check
-- Toggle requires only an env var change + restart — no code or DB changes
-- Existing users (verified or not) keep working under both modes
+- Add "Forgot password?" link on the sign-in page
+- Build a request flow where the user enters their email and receives a reset link
+- Build a reset flow where the user clicks the link, enters a new password, and signs in
+- Reuse the existing `VerificationToken` model to store password reset tokens (sha256-hashed, single-use, short TTL)
+- Send the reset email via the existing Resend integration
+- Do not leak whether an email exists (generic success response on request)
 
 ## Notes
 
-- **Single source of truth:** centralize the flag in `src/lib/config.ts` (or similar) so callsites read `isEmailVerificationEnabled()` instead of touching `process.env` directly. Easier to grep, easier to test, easier to swap later (e.g., DB-backed or per-env).
-- **Default:** `true` (verification ON) when env var is unset or unrecognized — fail-closed against accidental misconfig in production. User will set `EMAIL_VERIFICATION_ENABLED=false` locally for now.
-- **Parsing:** treat `"true"`, `"1"`, `"yes"` (case-insensitive) as enabled; anything else off-only when explicitly set to `"false"`/`"0"`/`"no"`. Keep parser narrow.
-- **Affected callsites:**
-  - `POST /api/auth/register`: when disabled, `emailVerified: new Date()` on create, skip `createVerificationToken` + `sendVerificationEmail`, return success — register form still redirects (we'll either keep `/verify-email` redirect with a "verification disabled — sign in" copy, or change register-form to redirect to `/sign-in` when disabled by reading a flag from the server response). Decide during implementation; simplest: server returns `{ verificationRequired: boolean }` and register form branches on it.
-  - `src/auth.ts` credentials `authorize`: when disabled, skip the `if (!user.emailVerified) return null` check.
-  - `POST /api/auth/resend-verification`: when disabled, return generic OK without sending (avoids leaking flag state).
-  - `GET /api/auth/verify`: leave as-is (idempotent, harmless if toggled).
-- **Document** the new env var in `.env.example` next to `RESEND_API_KEY`/`EMAIL_FROM` with a one-line comment explaining the use case (no verified Resend domain yet).
-- **Do not delete** `RESEND_API_KEY` / verification code — flag is a runtime switch, not a removal.
+- Token storage pattern should mirror the email verification flow in [src/lib/auth/verification-token.ts](src/lib/auth/verification-token.ts): 32 random bytes, sha256-hashed before storing in `VerificationToken.token`, single-use, with a TTL (suggest ~1h for password resets, shorter than the 24h verification window)
+- Reuse the Resend client + sender config from [src/lib/email/resend.ts](src/lib/email/resend.ts); add a `sendPasswordResetEmail()` helper alongside `sendVerificationEmail()`
+- Differentiate password reset tokens from verification tokens — likely via an `identifier` prefix (e.g. `pwreset:<email>`) so the same table can hold both without collisions
+- New routes:
+  - `POST /api/auth/forgot-password` — accepts `{ email }`, always returns generic OK, issues token + sends email when the user exists
+  - `GET /reset-password?token=...` — page that shows the new-password form (or an "invalid/expired" state)
+  - `POST /api/auth/reset-password` — accepts `{ token, password, confirmPassword }`, consumes the token, updates `User.password` (bcrypt 12 rounds, matching register flow), invalidates other sessions if feasible
+- New pages:
+  - `/forgot-password` — email entry form, mirrors the dark sign-in/register UI
+  - `/reset-password` — new password form, with the same validation rules as register (≥8 chars, match check)
+- Sign-in form: add a "Forgot password?" link near the password field, linking to `/forgot-password`
+- Toasts: success on email-sent, success on password-reset, error states for expired/invalid token
+- Apply the same anti-autofill defenses on the reset form as the sign-in form already uses
+- Out of scope: rate limiting beyond a simple cooldown, 2FA, account lockout
 
 ## History
 

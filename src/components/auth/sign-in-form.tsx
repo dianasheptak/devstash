@@ -50,6 +50,14 @@ export function SignInForm() {
     } else if (verify === "invalid") {
       toast.error("Verification link is invalid or already used", { id: "verify-invalid" });
     }
+    const reset = params.get("reset");
+    if (reset === "success") {
+      toast.success("Password reset — sign in with your new password", { id: "reset-success" });
+    } else if (reset === "expired") {
+      toast.error("Reset link expired — request a new one", { id: "reset-expired" });
+    } else if (reset === "invalid") {
+      toast.error("Reset link is invalid or already used", { id: "reset-invalid" });
+    }
   }, [params]);
 
   async function handleResend() {
@@ -139,9 +147,17 @@ export function SignInForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             ref={passwordRef}
             id="password"
