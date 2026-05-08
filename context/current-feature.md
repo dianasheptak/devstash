@@ -1,28 +1,12 @@
-# Current Feature: Auth Setup - NextAuth + GitHub Provider
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Install NextAuth v5 (`next-auth@beta`) and `@auth/prisma-adapter`
-- Set up split auth config pattern for edge compatibility (`src/auth.config.ts` + `src/auth.ts`)
-- Add GitHub OAuth provider
-- Create API route handler at `src/app/api/auth/[...nextauth]/route.ts`
-- Protect `/dashboard/*` routes via `src/proxy.ts` using Next.js 16 proxy pattern
-- Redirect unauthenticated users to NextAuth's default sign-in page
-- Extend Session type with `user.id` in `src/types/next-auth.d.ts`
-
 ## Notes
-
-- Use `next-auth@beta` (not `@latest` which installs v4)
-- Proxy file must be at `src/proxy.ts` (same level as `app/`)
-- Use named export: `export const proxy = auth(...)` — not default export
-- Use `session: { strategy: 'jwt' }` with split config pattern
-- Don't set custom `pages.signIn` — use NextAuth's default page
-- Use Context7 to verify newest config and conventions before writing code
-- Required env vars: `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`
 
 ## History
 
@@ -113,3 +97,18 @@ In Progress
 - Added `isPro` prop to `NavItem` in `sidebar-nav.tsx`; renders a subtle shadcn `Badge` (secondary, dimmed) with uppercase "PRO" text next to Files and Images types
 - Fixed Collections toggle: added `type="button"` and functional updater to resolve collapse not toggling on click
 - Added "New Collection" outline button to the dashboard header alongside the existing "New Item" button
+
+### 2026-05-08 — Auth Setup: NextAuth v5 + GitHub OAuth
+- Installed `next-auth@5.0.0-beta.31` and `@auth/prisma-adapter@2.11.2`
+- Split auth config: `src/auth.config.ts` (edge-safe, GitHub provider + `authorized` callback) and `src/auth.ts` (Prisma adapter + JWT strategy + `jwt`/`session` callbacks injecting `user.id`)
+- Created API route handler at `src/app/api/auth/[...nextauth]/route.ts` re-exporting `GET`/`POST` from `handlers`
+- Created `src/proxy.ts` (Next.js 16 proxy) — named `proxy = auth` export, matcher locked to `/dashboard/:path*`; unauthenticated users redirected to NextAuth's default sign-in page
+- Extended `Session.user` with `id: string` and JWT with `id?: string` via module augmentation in `src/types/next-auth.d.ts`
+- Added `.env.example` and a `!.env.example` exception in `.gitignore`
+
+### 2026-05-08 — Auth Phase 2: Credentials Provider + Register API
+- Added `Credentials` provider placeholder to `src/auth.config.ts` (edge-safe, `authorize: async () => null`) so the proxy/edge bundle stays bcrypt/Prisma-free
+- Overrode `Credentials` in `src/auth.ts`: filters the placeholder out of `authConfig.providers` and re-registers with real `authorize` — lowercase/trim email, `prisma.user.findUnique`, `bcrypt.compare`, returns `{ id, email, name, image }`
+- Created `POST /api/auth/register` at `src/app/api/auth/register/route.ts` — validates name/email/password/confirmPassword (regex email, ≥8 chars, match check), 409 on duplicate email, hashes with `bcrypt.hash(password, 12)`, returns `{ user: { id, email, name } }` on 201
+- No DB migration needed — `User.password String?` already existed in schema
+- Verified: `/api/auth/providers` lists both `github` and `credentials`; sign-in via `/api/auth/callback/credentials` issues `authjs.session-token` with `user.id`; `/dashboard` returns 200 with cookie; wrong password yields null session; all validation paths (duplicate, mismatch, short pw, missing field, bad email) return correct errors
