@@ -1,18 +1,28 @@
-# Current Feature
+# Current Feature: Auth Setup - NextAuth + GitHub Provider
 
 ## Status
 
-Completed
+In Progress
 
 ## Goals
 
-- Extract `SectionHeading`, `ItemCard`, `CollectionCard` from `dashboard/page.tsx` into dedicated component files
-- Move shared `ICON_MAP` constant out of both `page.tsx` and `sidebar-nav.tsx` into `src/lib/constants/item-types.ts`
-- Fix `ml-auto` collision on `ItemCard` when an item is both favorited and pinned
+- Install NextAuth v5 (`next-auth@beta`) and `@auth/prisma-adapter`
+- Set up split auth config pattern for edge compatibility (`src/auth.config.ts` + `src/auth.ts`)
+- Add GitHub OAuth provider
+- Create API route handler at `src/app/api/auth/[...nextauth]/route.ts`
+- Protect `/dashboard/*` routes via `src/proxy.ts` using Next.js 16 proxy pattern
+- Redirect unauthenticated users to NextAuth's default sign-in page
+- Extend Session type with `user.id` in `src/types/next-auth.d.ts`
 
 ## Notes
 
-Quick wins from code audit. No logic changes — pure extraction and one layout fix.
+- Use `next-auth@beta` (not `@latest` which installs v4)
+- Proxy file must be at `src/proxy.ts` (same level as `app/`)
+- Use named export: `export const proxy = auth(...)` — not default export
+- Use `session: { strategy: 'jwt' }` with split config pattern
+- Don't set custom `pages.signIn` — use NextAuth's default page
+- Use Context7 to verify newest config and conventions before writing code
+- Required env vars: `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`
 
 ## History
 
