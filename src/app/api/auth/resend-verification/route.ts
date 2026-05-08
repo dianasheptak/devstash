@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canResendVerification, createVerificationToken } from "@/lib/auth/verification-token";
 import { sendVerificationEmail } from "@/lib/email/resend";
+import { isEmailVerificationEnabled } from "@/lib/config";
 
 const GENERIC_OK = { ok: true } as const;
 
@@ -16,6 +17,10 @@ export async function POST(req: Request) {
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+  }
+
+  if (!isEmailVerificationEnabled()) {
+    return NextResponse.json(GENERIC_OK);
   }
 
   const user = await prisma.user.findUnique({ where: { email } });

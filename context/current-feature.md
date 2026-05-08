@@ -1,4 +1,4 @@
-# Current Feature: Email Verification on Register
+# Current Feature: Email Verification Feature Flag
 
 ## Status
 
@@ -6,26 +6,24 @@ In Progress
 
 ## Goals
 
-- New users registering via email/password receive a verification email containing a unique, time-limited link
-- Clicking the link verifies the account (sets `User.emailVerified` timestamp) and redirects to `/sign-in` (or `/dashboard` if already signed in) with a success toast
-- Unverified users cannot sign in via credentials — they get a clear error and an option to resend the verification email
-- GitHub OAuth users are auto-verified (OAuth providers vouch for the email) — no behavior change for them
-- Verification emails sent via Resend using `RESEND_API_KEY`
-- Tokens are single-use, expire after a reasonable window (e.g., 24h), and stored hashed in DB
-- Resend-verification endpoint is rate-limited to prevent abuse
+- One env variable, `EMAIL_VERIFICATION_ENABLED`, controls whether new users must verify their email before signing in
+- When `true` (default): existing flow — token issued, email sent via Resend, user lands on `/verify-email`, credentials sign-in blocked until verified
+- When `false`: skip Resend entirely on register, auto-set `User.emailVerified` to "now" on user creation, redirect register flow straight to `/sign-in?registered=1`, and credentials `authorize` does not enforce the `emailVerified` check
+- Toggle requires only an env var change + restart — no code or DB changes
+- Existing users (verified or not) keep working under both modes
 
 ## Notes
 
-- **Missing env var:** `RESEND_API_KEY` is not present in `.env`, `.env.example`, or `.env.production`. Add it (and document in `.env.example`) before implementation.
-- **Existing schema:** `User.emailVerified DateTime?` and the `VerificationToken` model already exist in `prisma/schema.prisma` (added during the NextAuth setup). Reuse `VerificationToken` for the verify flow — no migration likely needed unless we add fields.
-- **Auth flow integration:** The credentials `authorize` callback in `src/auth.ts` must reject users where `emailVerified === null`. GitHub OAuth path should remain untouched (Auth.js sets `emailVerified` automatically for OAuth).
-- **From email:** Need a verified sender domain in Resend (e.g., `noreply@devstash.io`) or use Resend's `onboarding@resend.dev` for dev only.
-- **UI surfaces:**
-  - Post-register: redirect to a "check your email" page (or show toast on `/sign-in?registered=1` already shown — extend it)
-  - `/verify-email/[token]` page (or API route) that validates and consumes the token
-  - Resend-verification action available on the sign-in page when credentials sign-in fails with "email not verified"
-- **Security:** Hash the token before storing (compare hash on verify); use `crypto.randomBytes(32).toString("hex")` or similar. Don't log raw tokens.
-- **Library:** Use `resend` npm package; consider `react-email` for templating but plain HTML string is acceptable for a single template.
+- **Single source of truth:** centralize the flag in `src/lib/config.ts` (or similar) so callsites read `isEmailVerificationEnabled()` instead of touching `process.env` directly. Easier to grep, easier to test, easier to swap later (e.g., DB-backed or per-env).
+- **Default:** `true` (verification ON) when env var is unset or unrecognized — fail-closed against accidental misconfig in production. User will set `EMAIL_VERIFICATION_ENABLED=false` locally for now.
+- **Parsing:** treat `"true"`, `"1"`, `"yes"` (case-insensitive) as enabled; anything else off-only when explicitly set to `"false"`/`"0"`/`"no"`. Keep parser narrow.
+- **Affected callsites:**
+  - `POST /api/auth/register`: when disabled, `emailVerified: new Date()` on create, skip `createVerificationToken` + `sendVerificationEmail`, return success — register form still redirects (we'll either keep `/verify-email` redirect with a "verification disabled — sign in" copy, or change register-form to redirect to `/sign-in` when disabled by reading a flag from the server response). Decide during implementation; simplest: server returns `{ verificationRequired: boolean }` and register form branches on it.
+  - `src/auth.ts` credentials `authorize`: when disabled, skip the `if (!user.emailVerified) return null` check.
+  - `POST /api/auth/resend-verification`: when disabled, return generic OK without sending (avoids leaking flag state).
+  - `GET /api/auth/verify`: leave as-is (idempotent, harmless if toggled).
+- **Document** the new env var in `.env.example` next to `RESEND_API_KEY`/`EMAIL_FROM` with a one-line comment explaining the use case (no verified Resend domain yet).
+- **Do not delete** `RESEND_API_KEY` / verification code — flag is a runtime switch, not a removal.
 
 ## History
 
@@ -155,3 +153,13 @@ In Progress
 - Sign-in form: refs + `autoComplete="off"` on form + `autoComplete="new-password"` on password + 50ms post-mount DOM `.value` clear to defeat browser autofill on every visit; toasts on `?verify=success|expired|invalid`
 - Demo user (`demo@devstash.io`) already seeded with `emailVerified: new Date()` so credentials sign-in still works
 - Added `scripts/purge-non-demo-users.ts` — destructive script to delete all non-demo users + their cascading data; dry-run by default, `--yes` flag required to actually delete; refuses to run if demo user is missing
+
+### 2026-05-08 — Email Verification Feature Flag
+- Added `src/lib/config.ts` with `isEmailVerificationEnabled()` — single source of truth that reads `EMAIL_VERIFICATION_ENABLED`. Narrow parser: `true|1|yes` → enabled, `false|0|no` → disabled, anything else → default. Default is `true` (fail-closed); `server-only`
+- `.env.example` documents the new var alongside Resend config
+- `POST /api/auth/register` branches on the flag — when disabled, sets `emailVerified: new Date()` on user create, skips token issuance + email send. Always returns `{ user, verificationRequired }` so the client can route correctly
+- `register-form.tsx` reads `verificationRequired` from the response: `/verify-email?email=…` when true, `/sign-in?registered=1` when false
+- `sign-in-form.tsx` — restored the `?registered=1` "Account created — sign in to continue" toast for the disabled-flag flow (the `?verify=*` toasts remain)
+- `src/auth.ts` credentials `authorize` — `emailVerified` check now gated behind `isEmailVerificationEnabled()`, so existing unverified users can sign in immediately when the flag is flipped off
+- `POST /api/auth/resend-verification` — short-circuits to generic `{ ok: true }` when the flag is disabled, so the endpoint reveals nothing about the flag's state
+- No code/DB changes required to flip — set `EMAIL_VERIFICATION_ENABLED=false` in `.env` and restart. Resend stays in the codebase as a runtime switch, not a removal
