@@ -39,6 +39,9 @@ export function SignInForm() {
   }, []);
 
   useEffect(() => {
+    if (params.get("registered") === "1") {
+      toast.success("Account created — sign in to continue", { id: "registered" });
+    }
     const verify = params.get("verify");
     if (verify === "success") {
       toast.success("Email verified — you can now sign in", { id: "verify-success" });

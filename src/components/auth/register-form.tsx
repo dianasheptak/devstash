@@ -43,15 +43,20 @@ export function RegisterForm() {
         body: JSON.stringify({ name, email, password, confirmPassword }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
         const message = data?.error ?? "Registration failed";
         setError(message);
         toast.error(message);
         return;
       }
 
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      if (data?.verificationRequired) {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+      } else {
+        router.push("/sign-in?registered=1");
+      }
     });
   }
 
