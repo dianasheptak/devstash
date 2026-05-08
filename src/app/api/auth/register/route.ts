@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { createVerificationToken } from "@/lib/auth/verification-token";
+import { sendVerificationEmail } from "@/lib/email/resend";
 
 type RegisterPayload = {
   name?: unknown;
@@ -49,6 +51,13 @@ export async function POST(req: Request) {
     data: { name, email, password: hashedPassword },
     select: { id: true, email: true, name: true },
   });
+
+  try {
+    const { rawToken } = await createVerificationToken(user.email);
+    await sendVerificationEmail({ to: user.email, token: rawToken, name: user.name });
+  } catch (err) {
+    console.error("[register] failed to send verification email", err);
+  }
 
   return NextResponse.json({ user }, { status: 201 });
 }
