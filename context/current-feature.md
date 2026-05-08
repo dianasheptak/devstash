@@ -1,12 +1,31 @@
-# Current Feature
+# Current Feature: Email Verification on Register
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- New users registering via email/password receive a verification email containing a unique, time-limited link
+- Clicking the link verifies the account (sets `User.emailVerified` timestamp) and redirects to `/sign-in` (or `/dashboard` if already signed in) with a success toast
+- Unverified users cannot sign in via credentials — they get a clear error and an option to resend the verification email
+- GitHub OAuth users are auto-verified (OAuth providers vouch for the email) — no behavior change for them
+- Verification emails sent via Resend using `RESEND_API_KEY`
+- Tokens are single-use, expire after a reasonable window (e.g., 24h), and stored hashed in DB
+- Resend-verification endpoint is rate-limited to prevent abuse
+
 ## Notes
+
+- **Missing env var:** `RESEND_API_KEY` is not present in `.env`, `.env.example`, or `.env.production`. Add it (and document in `.env.example`) before implementation.
+- **Existing schema:** `User.emailVerified DateTime?` and the `VerificationToken` model already exist in `prisma/schema.prisma` (added during the NextAuth setup). Reuse `VerificationToken` for the verify flow — no migration likely needed unless we add fields.
+- **Auth flow integration:** The credentials `authorize` callback in `src/auth.ts` must reject users where `emailVerified === null`. GitHub OAuth path should remain untouched (Auth.js sets `emailVerified` automatically for OAuth).
+- **From email:** Need a verified sender domain in Resend (e.g., `noreply@devstash.io`) or use Resend's `onboarding@resend.dev` for dev only.
+- **UI surfaces:**
+  - Post-register: redirect to a "check your email" page (or show toast on `/sign-in?registered=1` already shown — extend it)
+  - `/verify-email/[token]` page (or API route) that validates and consumes the token
+  - Resend-verification action available on the sign-in page when credentials sign-in fails with "email not verified"
+- **Security:** Hash the token before storing (compare hash on verify); use `crypto.randomBytes(32).toString("hex")` or similar. Don't log raw tokens.
+- **Library:** Use `resend` npm package; consider `react-email` for templating but plain HTML string is acceptable for a single template.
 
 ## History
 
@@ -123,3 +142,16 @@ Not Started
 - Installed `sonner` and added `<Toaster theme="dark" position="top-right" richColors closeButton />` to root layout
 - Toasts: sign-in success "Welcome back!", sign-in failure "Invalid email or password", register validation/server errors, and one-shot "Account created — sign in to continue" on `/sign-in?registered=1` (deduped via stable `id: "registered"` to survive React StrictMode double-effect)
 - All four auth-adjacent pages render dynamically; smoke-tested HTTP: `/sign-in` 200, `/register` 200, `/dashboard` and `/profile` redirect to `/sign-in?callbackUrl=...` when unauthed, `/sign-in` redirects to `/dashboard` when authed
+
+### 2026-05-08 — Email Verification on Register (Resend)
+- Installed `resend@6.12.3`; added `RESEND_API_KEY`, `EMAIL_FROM`, `APP_URL` to `.env.example`
+- `src/lib/email/resend.ts` — Resend client + `sendVerificationEmail()` (HTML + text), default sender `DevStash <onboarding@resend.dev>` overridable via `EMAIL_FROM`
+- `src/lib/auth/verification-token.ts` — `createVerificationToken`, `consumeVerificationToken`, `canResendVerification`. Tokens are 32 random bytes, **stored as sha256 hashes** in `VerificationToken.token` (no schema change), single-use, 24h TTL, 60s resend cooldown
+- `POST /api/auth/register` — issues token + sends verification email after user creation; failures logged but don't block registration; redirects user to `/verify-email?email=<email>`
+- `GET /api/auth/verify?token=...` — consumes token, sets `User.emailVerified`, redirects to `/sign-in?verify=success|expired|invalid`
+- `POST /api/auth/resend-verification` — generic-OK responses for non-existent/already-verified emails (no enumeration), 429 on cooldown
+- `src/auth.ts` credentials `authorize` — returns `null` when `emailVerified === null` (GitHub OAuth path untouched; Auth.js sets `emailVerified` automatically for OAuth)
+- New `/verify-email` page (`src/app/verify-email/page.tsx` + `src/components/auth/verify-email-card.tsx`) — "Check your email" card showing the user's address with mail icon, "Resend verification email" button, and "Sign in" link; redirects to `/dashboard` if already authed
+- Sign-in form: refs + `autoComplete="off"` on form + `autoComplete="new-password"` on password + 50ms post-mount DOM `.value` clear to defeat browser autofill on every visit; toasts on `?verify=success|expired|invalid`
+- Demo user (`demo@devstash.io`) already seeded with `emailVerified: new Date()` so credentials sign-in still works
+- Added `scripts/purge-non-demo-users.ts` — destructive script to delete all non-demo users + their cascading data; dry-run by default, `--yes` flag required to actually delete; refuses to run if demo user is missing

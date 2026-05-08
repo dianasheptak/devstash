@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -26,12 +26,51 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isResending, setIsResending] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (params.get("registered") === "1") {
-      toast.success("Account created — sign in to continue", { id: "registered" });
+    const id = window.setTimeout(() => {
+      if (emailRef.current) emailRef.current.value = "";
+      if (passwordRef.current) passwordRef.current.value = "";
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const verify = params.get("verify");
+    if (verify === "success") {
+      toast.success("Email verified — you can now sign in", { id: "verify-success" });
+    } else if (verify === "expired") {
+      toast.error("Verification link expired — request a new one below", { id: "verify-expired" });
+    } else if (verify === "invalid") {
+      toast.error("Verification link is invalid or already used", { id: "verify-invalid" });
     }
   }, [params]);
+
+  async function handleResend() {
+    if (!email) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setIsResending(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error ?? "Could not send verification email");
+        return;
+      }
+      toast.success("If that email needs verification, we just sent a new link");
+    } finally {
+      setIsResending(false);
+    }
+  }
 
   function onCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,15 +117,17 @@ export function SignInForm() {
         </div>
       </div>
 
-      <form onSubmit={onCredentialsSubmit} className="space-y-3">
+      <form onSubmit={onCredentialsSubmit} className="space-y-3" autoComplete="off">
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-sm font-medium">
             Email
           </label>
           <Input
+            ref={emailRef}
             id="email"
+            name="signin-email"
             type="email"
-            autoComplete="email"
+            autoComplete="on"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -99,9 +140,11 @@ export function SignInForm() {
             Password
           </label>
           <Input
+            ref={passwordRef}
             id="password"
+            name="signin-password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
