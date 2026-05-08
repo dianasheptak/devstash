@@ -10,13 +10,20 @@ import { cn } from '@/lib/utils';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
 
+type SidebarUser = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
 type Props = {
   children: React.ReactNode;
   itemTypes: SidebarItemType[];
   collections: SidebarCollection[];
+  user: SidebarUser;
 };
 
-export function DashboardLayout({ children, itemTypes, collections }: Props) {
+export function DashboardLayout({ children, itemTypes, collections, user }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -91,14 +98,14 @@ export function DashboardLayout({ children, itemTypes, collections }: Props) {
           </div>
 
           <div className="flex-1 overflow-hidden flex flex-col">
-            <SidebarNav collapsed={collapsed} itemTypes={itemTypes} collections={collections} />
+            <SidebarNav collapsed={collapsed} itemTypes={itemTypes} collections={collections} user={user} />
           </div>
         </aside>
 
         {/* Mobile drawer */}
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="p-0 flex flex-col">
-            <SidebarNav collapsed={false} itemTypes={itemTypes} collections={collections} />
+            <SidebarNav collapsed={false} itemTypes={itemTypes} collections={collections} user={user} />
           </SheetContent>
         </Sheet>
 

@@ -6,14 +6,12 @@ import { usePathname } from 'next/navigation';
 import {
   Star,
   LayoutGrid,
-  Settings,
   ChevronDown,
 } from 'lucide-react';
-import { mockUser } from '@/lib/mock-data';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ICON_MAP } from '@/lib/constants/item-types';
+import { UserMenu } from './user-menu';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
 
@@ -91,25 +89,25 @@ function SectionLabel({
   );
 }
 
+type SidebarUser = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+};
+
 type Props = {
   collapsed: boolean;
   itemTypes: SidebarItemType[];
   collections: SidebarCollection[];
+  user: SidebarUser;
 };
 
-export function SidebarNav({ collapsed, itemTypes, collections }: Props) {
+export function SidebarNav({ collapsed, itemTypes, collections, user }: Props) {
   const pathname = usePathname();
   const [collectionsOpen, setCollectionsOpen] = useState(true);
 
   const favoriteCollections = collections.filter((c) => c.isFavorite);
   const recentCollections = collections.filter((c) => !c.isFavorite).slice(0, 3);
-
-  const initials = mockUser.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 
   return (
     <div className="flex flex-col h-full">
@@ -218,37 +216,7 @@ export function SidebarNav({ collapsed, itemTypes, collections }: Props) {
         )}
       </div>
 
-      {/* User area */}
-      <div
-        className={cn(
-          'flex items-center gap-2.5 border-t border-border shrink-0',
-          collapsed ? 'justify-center px-2 py-3' : 'px-3 py-3'
-        )}
-      >
-        <Avatar className="size-7 shrink-0">
-          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        {!collapsed && (
-          <>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate leading-tight">
-                {mockUser.name}
-              </p>
-              <p className="text-xs text-muted-foreground truncate leading-tight">
-                {mockUser.email}
-              </p>
-            </div>
-            <Link
-              href="/dashboard/settings"
-              className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-            >
-              <Settings className="size-4" />
-            </Link>
-          </>
-        )}
-      </div>
+      <UserMenu user={user} collapsed={collapsed} />
     </div>
   );
 }

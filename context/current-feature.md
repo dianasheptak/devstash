@@ -112,3 +112,14 @@ Not Started
 - Created `POST /api/auth/register` at `src/app/api/auth/register/route.ts` — validates name/email/password/confirmPassword (regex email, ≥8 chars, match check), 409 on duplicate email, hashes with `bcrypt.hash(password, 12)`, returns `{ user: { id, email, name } }` on 201
 - No DB migration needed — `User.password String?` already existed in schema
 - Verified: `/api/auth/providers` lists both `github` and `credentials`; sign-in via `/api/auth/callback/credentials` issues `authjs.session-token` with `user.id`; `/dashboard` returns 200 with cookie; wrong password yields null session; all validation paths (duplicate, mismatch, short pw, missing field, bad email) return correct errors
+
+### 2026-05-08 — Auth Phase 3: Custom Auth UI + Sidebar User Menu + Toasts
+- Wired `pages.signIn = "/sign-in"` in `src/auth.config.ts` so the proxy and `auth()` redirects target the custom dark page (no more default white NextAuth page)
+- Built `/sign-in`, `/register`, `/profile` as server components with `force-dynamic`; each calls `auth()` and redirects authed (sign-in/register) or unauthed (profile) users
+- Extracted client form components: `src/components/auth/sign-in-form.tsx` (credentials + inline GitHub brand SVG since lucide-react dropped `Github`; uses `signIn` from `next-auth/react`) and `src/components/auth/register-form.tsx` (validation, `POST /api/auth/register`, redirects to `/sign-in?registered=1`)
+- Added reusable `UserAvatar` (`src/components/shared/user-avatar.tsx`) with `getInitials()` helper at `src/lib/initials.ts` — image-or-initials fallback, "Brad Traversy" → "BT"
+- Added `UserMenu` (`src/components/layout/user-menu.tsx`) — sidebar bottom area with avatar linking to `/profile`, chevron-toggled upward popover (Profile + Sign out), pointerdown-outside + Escape close
+- Removed `mockUser` from `SidebarNav`; `dashboard/layout.tsx` calls `auth()` and forwards real `user` through `DashboardLayout` to both desktop and mobile `SidebarNav`
+- Installed `sonner` and added `<Toaster theme="dark" position="top-right" richColors closeButton />` to root layout
+- Toasts: sign-in success "Welcome back!", sign-in failure "Invalid email or password", register validation/server errors, and one-shot "Account created — sign in to continue" on `/sign-in?registered=1` (deduped via stable `id: "registered"` to survive React StrictMode double-effect)
+- All four auth-adjacent pages render dynamically; smoke-tested HTTP: `/sign-in` 200, `/register` 200, `/dashboard` and `/profile` redirect to `/sign-in?callbackUrl=...` when unauthed, `/sign-in` redirects to `/dashboard` when authed
