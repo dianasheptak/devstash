@@ -39,14 +39,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    jwt({ token, user }) {
-      if (user) token.id = user.id;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        const u = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { passwordChangedAt: true },
+        });
+        if (u) token.pwAt = u.passwordChangedAt.getTime();
+      }
       return token;
     },
-    session({ session, token }) {
-      if (token.id && session.user) {
-        session.user.id = token.id as string;
+    async session({ session, token }) {
+      if (typeof token.id !== "string" || !session.user) return session;
+
+      const u = await prisma.user.findUnique({
+        where: { id: token.id },
+        select: { passwordChangedAt: true },
+      });
+
+      // Invalidate the session if the user was deleted, the token predates this
+      // tracking field (forces a one-time re-login on deploy), or the password
+      // has been changed since this token was issued.
+      if (
+        !u ||
+        typeof token.pwAt !== "number" ||
+        u.passwordChangedAt.getTime() > token.pwAt
+      ) {
+        return { ...session, user: { ...session.user, id: undefined as unknown as string } };
       }
+
+      session.user.id = token.id;
       return session;
     },
   },
