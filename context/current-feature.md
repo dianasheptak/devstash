@@ -1,33 +1,12 @@
-# Current Feature: Rate Limiting for Auth
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add rate limiting to auth-related API routes using Upstash Redis with `@upstash/ratelimit`
-- Create a reusable rate limiting utility at `src/lib/rate-limit.ts`
-- Protect endpoints with these limits:
-  - `/api/auth/callback/credentials` (login): 5 attempts / 15 min, keyed by IP + email
-  - `/api/auth/register`: 3 attempts / 1 hour, keyed by IP
-  - `/api/auth/forgot-password`: 3 attempts / 1 hour, keyed by IP
-  - `/api/auth/reset-password`: 5 attempts / 15 min, keyed by IP
-  - `/api/auth/resend-verification`: 3 attempts / 15 min, keyed by IP + email
-- Return 429 responses with JSON body and `Retry-After` header
-- Display user-friendly toast errors on the frontend
-
 ## Notes
-
-- Use sliding-window algorithm for smooth limiting
-- Extract IP from `x-forwarded-for` (Vercel) and fall back to request
-- Combine IP + email identifier where applicable for tighter limits
-- Rate-limit checks should return `{ success, remaining, reset }`
-- New env vars: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (add to `.env.example`)
-- Fail-open if Upstash is unavailable (allow request, log error) so a Redis outage doesn't lock users out
-- Login limiting on NextAuth credentials is tricky — may require a custom sign-in handler rather than touching `/api/auth/callback/credentials` directly
-- Upstash free tier (10k req/day) is sufficient for auth limiting
-- Spec file: `context/features/rate-limiting-spec.md`
 
 ## History
 
@@ -188,3 +167,14 @@ In Progress
 - Added `.claude/agents/auth-auditor.md` (sonnet subagent scoped to NextAuth v5 gaps, with explicit "do not flag" list) and `docs/audit-results/AUTH_SECURITY_REVIEW.md` (overwritten on each run)
 - Rate limiting on register / sign-in / change-password / reset-password is **deferred** — Medium-severity finding remains open for a follow-up
 - Existing JWTs without `pwAt` are treated as stale by the session callback, so all currently-signed-in users will need to re-authenticate once after this deploy
+
+### 2026-05-09 — Rate Limiting on Auth Endpoints (Upstash)
+- Installed `@upstash/ratelimit` and `@upstash/redis`; added `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` to `.env.example` (leaving them blank disables limiting)
+- New `src/lib/rate-limit.ts` — lazy Upstash client + five named sliding-window limiters: `login` (5/15min), `register` (3/1h), `forgotPassword` (3/1h), `resetPassword` (5/15min), `resendVerification` (3/15min). Per-limiter Redis key prefixes prevent cross-route counter collisions
+- Helpers: `getClientIp()` reads `x-forwarded-for` (first hop) then `x-real-ip` then `"unknown"`; `checkRateLimit()` returns `{ success, remaining, reset, retryAfterSeconds }`; `rateLimitedResponse()` returns 429 + JSON `{ error }` + `Retry-After` header. Module is `server-only`
+- **Fail-open**: missing env vars or limiter exceptions return `{ success: true }` so a Redis outage cannot lock users out of auth
+- `/api/auth/register`, `/api/auth/forgot-password`, `/api/auth/reset-password` gated by IP-keyed checks at the top of POST. `/api/auth/resend-verification` keyed by `${ip}:${email}` and placed before the `EMAIL_VERIFICATION_ENABLED` short-circuit so the disabled-flag deploy still rate-limits
+- Login limiting wired into the credentials `authorize()` callback in `src/auth.ts` — keyed by `${ip}:${email}`. Throws `RateLimitedError extends CredentialsSignin` with `code = "RateLimitExceeded"`; NextAuth surfaces this as `result.code` to the client
+- `sign-in-form.tsx` — `result.code === "RateLimitExceeded"` maps to "Too many login attempts. Please try again in a few minutes."; falls back to the existing generic "Invalid email or password" otherwise (secure failure mode if the code isn't surfaced)
+- Other forms (register / forgot / reset / resend) already piped `data?.error` to a `toast.error`, so the 429 message renders without UI changes
+- Closes the Medium-severity rate-limiting finding deferred from the 2026-05-09 auth-hardening sweep
