@@ -12,7 +12,11 @@ export function ItemCard({ item }: { item: ItemWithMeta }) {
       : item.content?.split('\n').slice(0, 2).join(' ').slice(0, 120);
 
   return (
-    <Card size="sm" className="hover:ring-foreground/20 transition-shadow cursor-pointer">
+    <Card
+      size="sm"
+      className="hover:ring-foreground/20 transition-shadow cursor-pointer border-l-[3px]"
+      style={{ borderLeftColor: item.itemType.color }}
+    >
       <CardHeader className="border-b">
         <div className="flex items-center gap-2">
           {Icon && (
