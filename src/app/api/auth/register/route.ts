@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createVerificationToken } from "@/lib/auth/verification-token";
+import { canResendVerification, createVerificationToken } from "@/lib/auth/verification-token";
 import { sendVerificationEmail } from "@/lib/email/resend";
 import { isEmailVerificationEnabled } from "@/lib/config";
 
@@ -41,14 +41,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
   }
 
+  const verificationRequired = isEmailVerificationEnabled();
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    // Don't reveal that an account with this email exists. Return the same
+    // generic success shape as the create-new path — users who own the address
+    // already know to sign in or use forgot-password from the next screen.
+    return NextResponse.json({ verificationRequired }, { status: 201 });
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
-  const verificationRequired = isEmailVerificationEnabled();
-
   const user = await prisma.user.create({
     data: {
       name,
@@ -59,7 +62,7 @@ export async function POST(req: Request) {
     select: { id: true, email: true, name: true },
   });
 
-  if (verificationRequired) {
+  if (verificationRequired && (await canResendVerification(user.email))) {
     try {
       const { rawToken } = await createVerificationToken(user.email);
       await sendVerificationEmail({ to: user.email, token: rawToken, name: user.name });
@@ -68,5 +71,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ user, verificationRequired }, { status: 201 });
+  return NextResponse.json({ verificationRequired }, { status: 201 });
 }

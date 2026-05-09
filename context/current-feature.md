@@ -1,12 +1,26 @@
-# Current Feature
+# Current Feature: Profile Page
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Create a protected `/profile` page that displays the authenticated user's info
+- Show user identity: email, name, avatar (GitHub OAuth image or initials fallback), account creation date
+- Show usage stats: total items, total collections, and a per-type breakdown (snippets, prompts, notes, commands, links, files, images)
+- Provide a "Change password" action for credentials users only (hidden for GitHub-only accounts)
+- Provide a "Delete account" action with a confirmation dialog before destructive deletion
+- Follow existing codebase patterns (server components, `src/lib/db/*` for data, shadcn/ui, dark theme)
+
 ## Notes
+
+- Avatar resolution: prefer `user.image` (GitHub OAuth) → fallback to initials via existing `UserAvatar`/`getInitials()`
+- "Change password" should only render for users who have a `password` set in DB (i.e., email/password signups), not GitHub OAuth–only users
+- Delete account must require explicit confirmation (modal/dialog) to prevent accidental destruction; cascade-deletes all user data via existing Prisma `onDelete: Cascade` relations
+- Per-type breakdown: counts for all 7 system types (snippet, prompt, command, note, file, image, link), even if zero
+- Route is already gated by the `/dashboard/*` proxy matcher — `/profile` page itself currently does its own `auth()` redirect; keep that pattern
+- A basic `/profile` page already exists from the auth phase; this feature extends it into the full profile experience
 
 ## History
 

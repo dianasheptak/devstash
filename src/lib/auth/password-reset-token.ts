@@ -4,14 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export const PASSWORD_RESET_TOKEN_TTL_HOURS = 1;
 const RESEND_COOLDOWN_SECONDS = 60;
-const IDENTIFIER_PREFIX = "pwreset:";
+export const PASSWORD_RESET_IDENTIFIER_PREFIX = "pwreset:";
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 function prefixedIdentifier(email: string): string {
-  return `${IDENTIFIER_PREFIX}${email.trim().toLowerCase()}`;
+  return `${PASSWORD_RESET_IDENTIFIER_PREFIX}${email.trim().toLowerCase()}`;
 }
 
 export async function createPasswordResetToken(email: string): Promise<{ rawToken: string; expires: Date }> {
@@ -40,7 +40,7 @@ export async function consumePasswordResetToken(rawToken: string): Promise<Consu
   const tokenHash = hashToken(rawToken);
   const record = await prisma.verificationToken.findUnique({ where: { token: tokenHash } });
 
-  if (!record || !record.identifier.startsWith(IDENTIFIER_PREFIX)) {
+  if (!record || !record.identifier.startsWith(PASSWORD_RESET_IDENTIFIER_PREFIX)) {
     return { ok: false, reason: "invalid" };
   }
 
@@ -49,7 +49,7 @@ export async function consumePasswordResetToken(rawToken: string): Promise<Consu
   if (record.expires < new Date()) {
     return { ok: false, reason: "expired" };
   }
-  return { ok: true, email: record.identifier.slice(IDENTIFIER_PREFIX.length) };
+  return { ok: true, email: record.identifier.slice(PASSWORD_RESET_IDENTIFIER_PREFIX.length) };
 }
 
 export async function canResendPasswordReset(email: string): Promise<boolean> {

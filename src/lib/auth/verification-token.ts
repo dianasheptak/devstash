@@ -1,6 +1,7 @@
 import "server-only";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { PASSWORD_RESET_IDENTIFIER_PREFIX } from "./password-reset-token";
 
 export const VERIFICATION_TOKEN_TTL_HOURS = 24;
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -35,7 +36,11 @@ export async function consumeVerificationToken(rawToken: string): Promise<Consum
   const tokenHash = hashToken(rawToken);
   const record = await prisma.verificationToken.findUnique({ where: { token: tokenHash } });
 
-  if (!record) return { ok: false, reason: "invalid" };
+  // Reject rows that belong to other flows sharing this table (e.g. password reset)
+  // so the verify endpoint cannot burn a live reset token.
+  if (!record || record.identifier.startsWith(PASSWORD_RESET_IDENTIFIER_PREFIX)) {
+    return { ok: false, reason: "invalid" };
+  }
 
   await prisma.verificationToken.delete({ where: { token: tokenHash } });
 
