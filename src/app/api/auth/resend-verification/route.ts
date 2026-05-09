@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { canResendVerification, createVerificationToken } from "@/lib/auth/verification-token";
 import { sendVerificationEmail } from "@/lib/email/resend";
 import { isEmailVerificationEnabled } from "@/lib/config";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 const GENERIC_OK = { ok: true } as const;
 
@@ -17,6 +18,12 @@ export async function POST(req: Request) {
   const email = typeof payload.email === "string" ? payload.email.trim().toLowerCase() : "";
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+  }
+
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit("resendVerification", `${ip}:${email}`);
+  if (!rl.success) {
+    return rateLimitedResponse(rl, "requests");
   }
 
   if (!isEmailVerificationEnabled()) {

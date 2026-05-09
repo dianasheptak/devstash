@@ -95,7 +95,11 @@ export function SignInForm() {
       });
 
       if (!result || result.error) {
-        const message = "Invalid email or password";
+        const code = (result as { code?: string } | undefined)?.code;
+        const message =
+          code === "RateLimitExceeded"
+            ? "Too many login attempts. Please try again in a few minutes."
+            : "Invalid email or password";
         setError(message);
         toast.error(message);
         return;

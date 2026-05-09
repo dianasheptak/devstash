@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { canResendVerification, createVerificationToken } from "@/lib/auth/verification-token";
 import { sendVerificationEmail } from "@/lib/email/resend";
 import { isEmailVerificationEnabled } from "@/lib/config";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 
 type RegisterPayload = {
   name?: unknown;
@@ -13,6 +14,12 @@ type RegisterPayload = {
 };
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit("register", ip);
+  if (!rl.success) {
+    return rateLimitedResponse(rl, "registration attempts");
+  }
+
   let payload: RegisterPayload;
   try {
     payload = await req.json();
