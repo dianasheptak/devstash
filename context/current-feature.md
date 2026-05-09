@@ -1,26 +1,12 @@
-# Current Feature: Profile Page
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create a protected `/profile` page that displays the authenticated user's info
-- Show user identity: email, name, avatar (GitHub OAuth image or initials fallback), account creation date
-- Show usage stats: total items, total collections, and a per-type breakdown (snippets, prompts, notes, commands, links, files, images)
-- Provide a "Change password" action for credentials users only (hidden for GitHub-only accounts)
-- Provide a "Delete account" action with a confirmation dialog before destructive deletion
-- Follow existing codebase patterns (server components, `src/lib/db/*` for data, shadcn/ui, dark theme)
-
 ## Notes
-
-- Avatar resolution: prefer `user.image` (GitHub OAuth) → fallback to initials via existing `UserAvatar`/`getInitials()`
-- "Change password" should only render for users who have a `password` set in DB (i.e., email/password signups), not GitHub OAuth–only users
-- Delete account must require explicit confirmation (modal/dialog) to prevent accidental destruction; cascade-deletes all user data via existing Prisma `onDelete: Cascade` relations
-- Per-type breakdown: counts for all 7 system types (snippet, prompt, command, note, file, image, link), even if zero
-- Route is already gated by the `/dashboard/*` proxy matcher — `/profile` page itself currently does its own `auth()` redirect; keep that pattern
-- A basic `/profile` page already exists from the auth phase; this feature extends it into the full profile experience
 
 ## History
 
@@ -170,3 +156,14 @@ In Progress
 - `/reset-password` page + `ResetPasswordForm` — reads `?token=` from URL, missing-token state with link to `/forgot-password`, anti-autofill (refs + `autoComplete="off"` form + 50ms post-mount DOM `.value` clear) matching sign-in flow, success → `/sign-in?reset=success`, expired/invalid → `/sign-in?reset=expired|invalid`
 - `sign-in-form.tsx` — added "Forgot password?" link beside the password label, plus `?reset=success|expired|invalid` toasts (alongside the existing `?registered=1` and `?verify=*` toasts)
 - No DB migration — reuses the existing `VerificationToken` table via the `pwreset:` identifier prefix
+
+### 2026-05-09 — Profile Page + Auth Hardening
+- `/profile` page (`src/app/profile/page.tsx`) — identity (avatar via `UserAvatar`, name, email, account creation date), per-type usage stats for all 7 system types via new `getProfileData()` in `src/lib/db/profile.ts` (selects `User.password` only to derive `hasPassword`)
+- `src/components/profile/` — `ProfileActions` orchestrator + `ChangePasswordDialog` (only renders when `hasPassword`) + `DeleteAccountDialog` (typed-email confirmation)
+- New `src/components/ui/dialog.tsx` (Radix-based shadcn dialog primitive)
+- `POST /api/auth/change-password` — `auth()` gate, current-password check via `bcrypt.compare`, refuses to set a password on accounts that don't already have one, bumps `passwordChangedAt`
+- `POST /api/auth/delete-account` — `auth()` gate, requires typed email match (case-normalized), `prisma.user.delete` cascades to all owned rows; client calls `signOut({ callbackUrl: "/sign-in" })`
+- **Auth hardening (auth-auditor sweep):** added `User.passwordChangedAt` (migration `20260509150615_add_password_changed_at`) + embedded `pwAt` in JWT; `session()` callback now rejects deleted users and tokens minted before the latest password change. Reset-password no longer calls the no-op `prisma.session.deleteMany` under JWT strategy and bumps `passwordChangedAt` instead. `consumeVerificationToken` rejects rows whose identifier carries the shared `PASSWORD_RESET_IDENTIFIER_PREFIX` so the verify endpoint cannot burn a live reset token. Register no longer leaks account existence: existing-email path returns the same generic 201 `{ verificationRequired }` shape, no token issued or email sent; new-user path gates token issuance on `canResendVerification`
+- Added `.claude/agents/auth-auditor.md` (sonnet subagent scoped to NextAuth v5 gaps, with explicit "do not flag" list) and `docs/audit-results/AUTH_SECURITY_REVIEW.md` (overwritten on each run)
+- Rate limiting on register / sign-in / change-password / reset-password is **deferred** — Medium-severity finding remains open for a follow-up
+- Existing JWTs without `pwAt` are treated as stale by the session callback, so all currently-signed-in users will need to re-authenticate once after this deploy
