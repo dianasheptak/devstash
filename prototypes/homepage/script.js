@@ -33,7 +33,7 @@
       y: Math.random() * (canvas.height * 0.6) + canvas.height * 0.2,
       vx: (Math.random() - 0.5) * 0.8,
       vy: (Math.random() - 0.5) * 0.8,
-      size: 18 + Math.random() * 8,
+      size: 32 + Math.random() * 14,
       rotation: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 0.02,
       scale: 1,
