@@ -178,3 +178,11 @@ Not Started
 - `sign-in-form.tsx` — `result.code === "RateLimitExceeded"` maps to "Too many login attempts. Please try again in a few minutes."; falls back to the existing generic "Invalid email or password" otherwise (secure failure mode if the code isn't surfaced)
 - Other forms (register / forgot / reset / resend) already piped `data?.error` to a `toast.error`, so the 429 message renders without UI changes
 - Closes the Medium-severity rate-limiting finding deferred from the 2026-05-09 auth-hardening sweep
+
+### 2026-05-13 — Items List View
+- New dynamic route `/items/[type]` (`src/app/items/[type]/page.tsx`) — server component, `force-dynamic`, validates slug via `slugToTypeName`, `notFound()` on invalid
+- `src/app/items/layout.tsx` — wraps `/items/*` in `DashboardLayout` with sidebar (item types + collections), redirects unauthed users to `/sign-in?callbackUrl=/dashboard`
+- `src/proxy.ts` matcher extended to `/items/:path*` so auth gating covers the new route
+- `getItemsByType()` added to `src/lib/db/items.ts` — scoped to demo user, system-type-only filter, ordered by `isPinned desc` then `createdAt desc`
+- `ITEM_TYPE_NAMES`, `ItemTypeName`, and `slugToTypeName()` helper added to `src/lib/constants/item-types.ts` (plural slug → singular type name; null for unknown)
+- Header shows type-colored icon, plural label, and item count; empty state is a dashed-border placeholder; grid is 1 column on mobile, 2 at `md+`; reuses existing `ItemCard` so type-colored left border carries over
