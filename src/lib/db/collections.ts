@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { CreateCollectionParsed } from '@/lib/validation/collection';
+import type { ItemWithMeta } from '@/lib/db/items';
 
 function toSlug(name: string): string {
   return name
@@ -178,6 +179,113 @@ export async function getCollectionsForPicker(): Promise<CollectionPickerItem[]>
     select: { id: true, name: true, description: true },
     orderBy: { name: 'asc' },
   });
+}
+
+export async function getAllCollections(): Promise<CollectionWithMeta[]> {
+  const userId = await getDemoUserId();
+  if (!userId) return [];
+
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      items: {
+        include: {
+          item: {
+            include: { itemType: true },
+          },
+        },
+      },
+    },
+  });
+
+  return collections.map((col) => {
+    const itemTypes = col.items.map((ic) => ic.item.itemType);
+    const uniqueTypes = Array.from(new Map(itemTypes.map((t) => [t.id, t])).values());
+    const typeCounts = itemTypes.reduce<Record<string, number>>((acc, t) => {
+      acc[t.id] = (acc[t.id] ?? 0) + 1;
+      return acc;
+    }, {});
+    const dominantTypeId = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const dominantColor =
+      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? 'hsl(var(--border))';
+
+    return {
+      id: col.id,
+      name: col.name,
+      slug: toSlug(col.name),
+      description: col.description,
+      isFavorite: col.isFavorite,
+      itemCount: col.items.length,
+      types: uniqueTypes.map((t) => ({ name: t.name, icon: t.icon, color: t.color })),
+      dominantColor,
+    };
+  });
+}
+
+export type CollectionPage = CollectionWithMeta & {
+  items: ItemWithMeta[];
+};
+
+export async function getCollectionBySlug(slug: string): Promise<CollectionPage | null> {
+  const userId = await getDemoUserId();
+  if (!userId) return null;
+
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    include: {
+      items: {
+        orderBy: [{ item: { isPinned: 'desc' } }, { addedAt: 'desc' }],
+        include: {
+          item: {
+            include: {
+              itemType: { select: { name: true, icon: true, color: true } },
+              tags: { select: { name: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const col = collections.find((c) => toSlug(c.name) === slug);
+  if (!col) return null;
+
+  const rawItems = col.items.map((ic) => ic.item);
+  const itemTypes = rawItems.map((item) => item.itemType);
+  const uniqueTypes = Array.from(new Map(itemTypes.map((t) => [t.name, t])).values());
+  const typeCounts = itemTypes.reduce<Record<string, number>>((acc, t) => {
+    acc[t.name] = (acc[t.name] ?? 0) + 1;
+    return acc;
+  }, {});
+  const dominantTypeName = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const dominantColor =
+    uniqueTypes.find((t) => t.name === dominantTypeName)?.color ?? 'hsl(var(--border))';
+
+  return {
+    id: col.id,
+    name: col.name,
+    slug: toSlug(col.name),
+    description: col.description,
+    isFavorite: col.isFavorite,
+    itemCount: rawItems.length,
+    types: uniqueTypes.map((t) => ({ name: t.name, icon: t.icon, color: t.color })),
+    dominantColor,
+    items: rawItems.map((item) => ({
+      id: item.id,
+      title: item.title,
+      contentType: item.contentType,
+      content: item.content,
+      url: item.url,
+      description: item.description,
+      isFavorite: item.isFavorite,
+      isPinned: item.isPinned,
+      language: item.language,
+      createdAt: item.createdAt,
+      itemType: item.itemType,
+      tags: item.tags.map((t) => t.name),
+    })),
+  };
 }
 
 export async function getCollectionStats(): Promise<{ total: number; favorites: number }> {
