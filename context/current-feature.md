@@ -251,6 +251,17 @@ Not Started
 - Tests: 7 cases in `src/lib/validation/collection.test.ts` (trim, empty, max length, null description); 4 cases in `src/actions/collections.test.ts` (unauthorized, validation error, success, db exception)
 - All 43 Vitest tests pass; `npm run build` green
 
+### 2026-05-13 — Collection Assignment + Slug-Based Collection Links
+- `src/lib/db/collections.ts` — added `toSlug()` helper; `CollectionWithMeta` and `SidebarCollection` types now include `slug` (computed from name); added `CollectionPickerItem` type and `getCollectionsForPicker()` query (all user collections ordered by name)
+- `GET /api/collections` (`src/app/api/collections/route.ts`) — `auth()`-gated endpoint that returns all user collections for the picker
+- `src/lib/db/items.ts` — `CreateItemData` and `UpdateItemInput` both gain `collectionIds: string[]`; `createItem` connects selected collections via `ItemCollection` join rows; `updateItem` replaces memberships with `deleteMany: {} + create`
+- `src/lib/validation/item.ts` — `createItemSchema` and `updateItemSchema` both gain `collectionIds: z.array(z.string()).default([])`
+- `src/components/items/collection-picker.tsx` — new client component: scrollable checklist of toggle chips showing collection name + optional description; fully controlled (`selectedIds` / `onChange`)
+- `src/components/items/create-item-dialog.tsx` — fetches `/api/collections` on open, renders `CollectionPicker` after Tags field, passes `collectionIds` to `createItem` action
+- `src/components/items/item-drawer.tsx` — `DrawerEdit` fetches collections on mount, pre-selects from `item.collections`, passes `collectionIds` to `updateItem`
+- `src/components/collections/collection-card.tsx` and `src/components/layout/sidebar-nav.tsx` — collection hrefs changed from `/collections/{id}` to `/collections/{slug}`
+- All 43 Vitest tests pass; `npm run build` green
+
 ### 2026-05-13 — Markdown Editor
 - Installed `react-markdown` and `remark-gfm`
 - Created `src/components/items/markdown-editor.tsx` — client component with Write/Preview tabs, macOS window dots + copy button in `bg-[#2d2d2d]` header (matching `CodeEditor` style), auto-growing textarea (min 80px, max 400px), GFM rendering via `react-markdown` + `remark-gfm`; readonly mode shows Preview tab only

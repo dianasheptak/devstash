@@ -6,7 +6,7 @@ import type { CollectionWithMeta } from '@/lib/db/collections';
 
 export function CollectionCard({ col }: { col: CollectionWithMeta }) {
   return (
-    <Link href={`/collections/${col.id}`}>
+    <Link href={`/collections/${col.slug}`}>
       <Card
         size="sm"
         className="hover:ring-foreground/20 transition-shadow cursor-pointer h-full border-l-[3px]"

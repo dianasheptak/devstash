@@ -1,9 +1,19 @@
 import { prisma } from '@/lib/prisma';
 import type { CreateCollectionParsed } from '@/lib/validation/collection';
 
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 export type CollectionWithMeta = {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
   isFavorite: boolean;
   itemCount: number;
@@ -62,6 +72,7 @@ export async function getRecentCollections(limit = 6): Promise<CollectionWithMet
     return {
       id: col.id,
       name: col.name,
+      slug: toSlug(col.name),
       description: col.description,
       isFavorite: col.isFavorite,
       itemCount: col.items.length,
@@ -74,6 +85,7 @@ export async function getRecentCollections(limit = 6): Promise<CollectionWithMet
 export type SidebarCollection = {
   id: string;
   name: string;
+  slug: string;
   isFavorite: boolean;
   itemCount: number;
   dominantColor: string;
@@ -115,6 +127,7 @@ export async function getSidebarCollections(limit = 20): Promise<SidebarCollecti
     return {
       id: col.id,
       name: col.name,
+      slug: toSlug(col.name),
       isFavorite: col.isFavorite,
       itemCount: col.items.length,
       dominantColor: dominantEntry?.color ?? 'hsl(var(--border))',
@@ -147,6 +160,23 @@ export async function createCollection(
       isFavorite: true,
       createdAt: true,
     },
+  });
+}
+
+export type CollectionPickerItem = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
+export async function getCollectionsForPicker(): Promise<CollectionPickerItem[]> {
+  const userId = await getDemoUserId();
+  if (!userId) return [];
+
+  return prisma.collection.findMany({
+    where: { userId },
+    select: { id: true, name: true, description: true },
+    orderBy: { name: 'asc' },
   });
 }
 
