@@ -14,16 +14,29 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ICON_MAP } from '@/lib/constants/item-types';
 import { useItemDrawer } from './item-drawer-context';
-import { updateItem } from '@/actions/items';
+import { updateItem, deleteItem } from '@/actions/items';
 import type { ItemDetail } from '@/lib/db/items';
 
 export function ItemDrawer() {
+  const router = useRouter();
   const { openItemId, close } = useItemDrawer();
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   useEffect(() => {
     if (!openItemId) {
@@ -53,6 +66,22 @@ export function ItemDrawer() {
       cancelled = true;
     };
   }, [openItemId]);
+
+  const handleDelete = () => {
+    if (!item) return;
+    const id = item.id;
+    startDeleteTransition(async () => {
+      const result = await deleteItem(id);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success('Item deleted');
+      setConfirmDelete(false);
+      close();
+      router.refresh();
+    });
+  };
 
   const handleCopy = async () => {
     if (!item) return;
@@ -93,9 +122,37 @@ export function ItemDrawer() {
             item={item}
             onCopy={handleCopy}
             onEdit={() => setIsEditing(true)}
+            onDelete={() => setConfirmDelete(true)}
           />
         )}
       </SheetContent>
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {item
+                ? `"${item.title}" will be permanently deleted. This action cannot be undone.`
+                : 'This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} className="cursor-pointer">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
@@ -104,10 +161,12 @@ function DrawerBody({
   item,
   onCopy,
   onEdit,
+  onDelete,
 }: {
   item: ItemDetail;
   onCopy: () => void;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   const Icon = ICON_MAP[item.itemType.icon];
 
@@ -140,11 +199,11 @@ function DrawerBody({
 
       {/* Action bar */}
       <div className="flex items-center gap-1 px-4 py-2 border-b">
-        <Button size="sm" variant="ghost" onClick={onCopy}>
+        <Button size="sm" variant="ghost" onClick={onCopy} className="cursor-pointer">
           <Copy className="size-3.5" />
           Copy
         </Button>
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" className="cursor-pointer">
           <Star
             className={
               item.isFavorite
@@ -154,20 +213,21 @@ function DrawerBody({
           />
           {item.isFavorite ? 'Favorited' : 'Favorite'}
         </Button>
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" className="cursor-pointer">
           <Pin
             className={item.isPinned ? 'size-3.5 text-foreground' : 'size-3.5'}
           />
           {item.isPinned ? 'Pinned' : 'Pin'}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onEdit}>
+        <Button size="sm" variant="ghost" onClick={onEdit} className="cursor-pointer">
           <Pencil className="size-3.5" />
           Edit
         </Button>
         <Button
           size="sm"
           variant="ghost"
-          className="ml-auto text-destructive hover:text-destructive"
+          onClick={onDelete}
+          className="ml-auto text-destructive hover:text-destructive cursor-pointer"
         >
           <Trash2 className="size-3.5" />
           Delete
@@ -327,6 +387,7 @@ function DrawerEdit({
           size="sm"
           onClick={handleSave}
           disabled={titleEmpty || isPending}
+          className="cursor-pointer"
         >
           {isPending ? 'Saving...' : 'Save'}
         </Button>
@@ -335,6 +396,7 @@ function DrawerEdit({
           variant="ghost"
           onClick={onCancel}
           disabled={isPending}
+          className="cursor-pointer"
         >
           Cancel
         </Button>
