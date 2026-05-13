@@ -241,6 +241,16 @@ Not Started
 - Tests: 8 new cases in `src/lib/validation/item.test.ts` (type enum, title required, content required for non-link, URL required+malformed for link, tag normalization) and 6 new in `src/actions/items.test.ts` (unauthorized, validation failures, success, null-from-query, db exception)
 - All 32 Vitest tests pass; `npm run build` green
 
+### 2026-05-13 — Collection Create
+- `src/lib/validation/collection.ts` — `createCollectionSchema` (Zod): trims name, min 1 / max 100 chars; description coerced to `null` when empty
+- `src/lib/db/collections.ts` — `createCollection(userId, data)` query + `CollectionDetail` type; scoped to the authenticated user via `userId` param
+- `src/actions/collections.ts` — `createCollection(input)` server action: `auth()` gate, `safeParse`, returns `ActionResult<CollectionDetail>`
+- `src/components/collections/create-collection-dialog.tsx` — Dialog with Name + Description fields, `useTransition`, success/error toasts, `router.refresh()` on save
+- `src/components/collections/create-collection-context.tsx` — `CreateCollectionProvider` + `useCreateCollection()` context, mounts dialog once
+- `src/components/layout/dashboard-layout.tsx` — wraps providers with `CreateCollectionProvider`; "New Collection" header button wired to `useCreateCollection().open()`
+- Tests: 7 cases in `src/lib/validation/collection.test.ts` (trim, empty, max length, null description); 4 cases in `src/actions/collections.test.ts` (unauthorized, validation error, success, db exception)
+- All 43 Vitest tests pass; `npm run build` green
+
 ### 2026-05-13 — Markdown Editor
 - Installed `react-markdown` and `remark-gfm`
 - Created `src/components/items/markdown-editor.tsx` — client component with Write/Preview tabs, macOS window dots + copy button in `bg-[#2d2d2d]` header (matching `CodeEditor` style), auto-growing textarea (min 80px, max 400px), GFM rendering via `react-markdown` + `remark-gfm`; readonly mode shows Preview tab only

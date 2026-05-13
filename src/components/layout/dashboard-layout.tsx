@@ -9,6 +9,7 @@ import { SidebarNav } from './sidebar-nav';
 import { ItemDrawerProvider } from '@/components/items/item-drawer-context';
 import { ItemDrawer } from '@/components/items/item-drawer';
 import { CreateItemProvider, useCreateItem } from '@/components/items/create-item-context';
+import { CreateCollectionProvider, useCreateCollection } from '@/components/collections/create-collection-context';
 import { cn } from '@/lib/utils';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
@@ -30,9 +31,11 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
   return (
     <ItemDrawerProvider>
       <CreateItemProvider>
-        <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
-          {children}
-        </DashboardLayoutInner>
+        <CreateCollectionProvider>
+          <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
+            {children}
+          </DashboardLayoutInner>
+        </CreateCollectionProvider>
       </CreateItemProvider>
     </ItemDrawerProvider>
   );
@@ -40,6 +43,7 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
 
 function DashboardLayoutInner({ children, itemTypes, collections, user }: Props) {
   const { open: openCreate } = useCreateItem();
+  const { open: openCreateCollection } = useCreateCollection();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -70,7 +74,7 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
 
         {/* Right: action buttons */}
         <div className="ml-auto flex items-center gap-2 shrink-0">
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" onClick={() => openCreateCollection()} className="cursor-pointer">
             <Plus className="size-4" />
             New Collection
           </Button>

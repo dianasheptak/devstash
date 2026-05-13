@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { CreateCollectionParsed } from '@/lib/validation/collection';
 
 export type CollectionWithMeta = {
   id: string;
@@ -118,6 +119,34 @@ export async function getSidebarCollections(limit = 20): Promise<SidebarCollecti
       itemCount: col.items.length,
       dominantColor: dominantEntry?.color ?? 'hsl(var(--border))',
     };
+  });
+}
+
+export type CollectionDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  isFavorite: boolean;
+  createdAt: Date;
+};
+
+export async function createCollection(
+  userId: string,
+  data: CreateCollectionParsed
+): Promise<CollectionDetail> {
+  return prisma.collection.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+    },
   });
 }
 
