@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevStash — Stop Losing Your Developer Knowledge</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+    <!-- NAV -->
+    <nav class="navbar" id="navbar">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo">
+          <span class="logo-icon">⬡</span>
+          <span class="logo-text">DevStash</span>
+        </a>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+        <div class="nav-actions">
+          <a href="#" class="btn btn-ghost">Sign In</a>
+          <a href="#" class="btn btn-primary">Get Started</a>
+        </div>
+        <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="nav-mobile-menu" id="navMobile">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Sign In</a>
+        <a href="#" class="btn btn-primary">Get Started</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="hero-text fade-in">
+        <h1 class="hero-headline">
+          Stop Losing Your<br />
+          <span class="gradient-text">Developer Knowledge</span>
+        </h1>
+        <p class="hero-sub">
+          Snippets in GitHub Gists. Prompts buried in chat history. Commands in a
+          .txt file somewhere. DevStash puts everything in one fast, searchable hub.
+        </p>
+        <div class="hero-ctas">
+          <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+          <a href="#features" class="btn btn-outline btn-lg">See Features</a>
+        </div>
+      </div>
+
+      <div class="hero-visual fade-in fade-in-delay">
+        <!-- CHAOS BOX -->
+        <div class="hero-box chaos-box">
+          <div class="box-label">Your knowledge today…</div>
+          <canvas id="chaosCanvas"></canvas>
+        </div>
+
+        <!-- ARROW -->
+        <div class="transform-arrow" id="transformArrow">
+          <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 30 H46 M34 18 L46 30 L34 42" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <!-- DASHBOARD PREVIEW -->
+        <div class="hero-box dashboard-box">
+          <div class="box-label">…with DevStash</div>
+          <div class="dash-preview">
+            <div class="dash-sidebar">
+              <div class="dash-sidebar-item active">
+                <span class="dash-dot" style="background:#3b82f6"></span> Snippets
+              </div>
+              <div class="dash-sidebar-item">
+                <span class="dash-dot" style="background:#f59e0b"></span> Prompts
+              </div>
+              <div class="dash-sidebar-item">
+                <span class="dash-dot" style="background:#06b6d4"></span> Commands
+              </div>
+              <div class="dash-sidebar-item">
+                <span class="dash-dot" style="background:#22c55e"></span> Notes
+              </div>
+              <div class="dash-sidebar-item">
+                <span class="dash-dot" style="background:#6366f1"></span> Links
+              </div>
+            </div>
+            <div class="dash-main">
+              <div class="dash-card" style="border-top-color:#3b82f6">
+                <div class="dash-card-title">useDebounce hook</div>
+                <div class="dash-card-meta">TypeScript · #react #hooks</div>
+              </div>
+              <div class="dash-card" style="border-top-color:#f59e0b">
+                <div class="dash-card-title">Code review prompt</div>
+                <div class="dash-card-meta">Prompt · #ai #review</div>
+              </div>
+              <div class="dash-card" style="border-top-color:#06b6d4">
+                <div class="dash-card-title">git reset --hard HEAD~1</div>
+                <div class="dash-card-meta">Command · #git</div>
+              </div>
+              <div class="dash-card" style="border-top-color:#22c55e">
+                <div class="dash-card-title">API design notes</div>
+                <div class="dash-card-meta">Note · #backend</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features-section section" id="features">
+      <div class="container">
+        <div class="section-header fade-in">
+          <h2>Everything a developer needs, in one place</h2>
+          <p>Seven item types cover every piece of knowledge you reach for daily.</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card fade-in" style="--accent:#3b82f6">
+            <div class="feature-icon" style="color:#3b82f6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>Code Snippets</h3>
+            <p>Save reusable code with syntax highlighting for any language. Never rewrite the same utility twice.</p>
+          </div>
+          <div class="feature-card fade-in" style="--accent:#f59e0b">
+            <div class="feature-icon" style="color:#f59e0b">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></svg>
+            </div>
+            <h3>AI Prompts</h3>
+            <p>Store your best system prompts and reusable AI workflows. Build a library that gets smarter over time.</p>
+          </div>
+          <div class="feature-card fade-in" style="--accent:#06b6d4">
+            <div class="feature-icon" style="color:#06b6d4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
+            <h3>Commands</h3>
+            <p>One place for all your CLI commands, scripts, and shell one-liners. No more trawling bash history.</p>
+          </div>
+          <div class="feature-card fade-in" style="--accent:#22c55e">
+            <div class="feature-icon" style="color:#22c55e">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <h3>Notes</h3>
+            <p>Markdown-powered notes for architecture decisions, meeting outcomes, and anything worth keeping.</p>
+          </div>
+          <div class="feature-card fade-in" style="--accent:#64748b">
+            <div class="feature-icon" style="color:#64748b">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+            </div>
+            <h3>Files &amp; Docs <span class="pro-badge">Pro</span></h3>
+            <p>Upload context files, templates, and documentation directly. Access them from anywhere.</p>
+          </div>
+          <div class="feature-card fade-in" style="--accent:#6366f1">
+            <div class="feature-icon" style="color:#6366f1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <h3>Collections</h3>
+            <p>Group related items into collections — React Patterns, Interview Prep, Project Boilerplates.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI SECTION -->
+    <section class="ai-section section" id="ai">
+      <div class="container">
+        <div class="ai-inner fade-in">
+          <div class="ai-left">
+            <span class="pro-badge pro-badge-lg">Pro Feature</span>
+            <h2>Your knowledge base, supercharged by AI</h2>
+            <ul class="ai-checklist">
+              <li>
+                <span class="check-icon">✓</span>
+                <div>
+                  <strong>Auto-tagging</strong>
+                  <p>AI analyzes content and suggests the most relevant tags automatically.</p>
+                </div>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <div>
+                  <strong>Smart summaries</strong>
+                  <p>Get a plain-English description of any snippet or command in one click.</p>
+                </div>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <div>
+                  <strong>Explain This Code</strong>
+                  <p>Paste any snippet and get a detailed line-by-line breakdown.</p>
+                </div>
+              </li>
+              <li>
+                <span class="check-icon">✓</span>
+                <div>
+                  <strong>Prompt optimizer</strong>
+                  <p>Refine your AI prompts for better, more consistent results.</p>
+                </div>
+              </li>
+            </ul>
+            <a href="#pricing" class="btn btn-primary">Upgrade to Pro</a>
+          </div>
+          <div class="ai-right">
+            <div class="code-mockup">
+              <div class="code-mockup-header">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+                <span class="code-mockup-title">useDebounce.ts</span>
+              </div>
+              <pre class="code-mockup-body"><code><span class="token-keyword">import</span> <span class="token-brace">{</span> useState, useEffect <span class="token-brace">}</span> <span class="token-keyword">from</span> <span class="token-string">'react'</span>
+
+<span class="token-keyword">export function</span> <span class="token-fn">useDebounce</span><span class="token-brace">&lt;</span>T<span class="token-brace">&gt;</span>(
+  value<span class="token-punct">:</span> T,
+  delay<span class="token-punct">:</span> <span class="token-type">number</span>
+)<span class="token-punct">:</span> T <span class="token-brace">{</span>
+  <span class="token-keyword">const</span> [debouncedValue, setDebouncedValue] =
+    <span class="token-fn">useState</span><span class="token-brace">&lt;</span>T<span class="token-brace">&gt;</span>(value)
+
+  <span class="token-fn">useEffect</span>(<span class="token-brace">()</span> <span class="token-punct">=&gt;</span> <span class="token-brace">{</span>
+    <span class="token-keyword">const</span> timer = <span class="token-fn">setTimeout</span>(<span class="token-brace">()</span> <span class="token-punct">=&gt;</span> <span class="token-brace">{</span>
+      <span class="token-fn">setDebouncedValue</span>(value)
+    <span class="token-brace">}</span>, delay)
+    <span class="token-keyword">return</span> <span class="token-brace">()</span> <span class="token-punct">=&gt;</span> <span class="token-fn">clearTimeout</span>(timer)
+  <span class="token-brace">}</span>, [value, delay])
+
+  <span class="token-keyword">return</span> debouncedValue
+<span class="token-brace">}</span></code></pre>
+              <div class="ai-tags-demo">
+                <span class="ai-tags-label">✦ AI Generated Tags</span>
+                <div class="ai-tags">
+                  <span class="ai-tag" style="--c:#3b82f6">#react</span>
+                  <span class="ai-tag" style="--c:#f59e0b">#hooks</span>
+                  <span class="ai-tag" style="--c:#06b6d4">#typescript</span>
+                  <span class="ai-tag" style="--c:#22c55e">#performance</span>
+                  <span class="ai-tag" style="--c:#6366f1">#debounce</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing-section section" id="pricing">
+      <div class="container">
+        <div class="section-header fade-in">
+          <h2>Simple, honest pricing</h2>
+          <p>Start free, upgrade when you need more.</p>
+        </div>
+        <div class="pricing-toggle fade-in">
+          <span class="toggle-label" id="labelMonthly">Monthly</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="billingToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label" id="labelYearly">Yearly <span class="save-badge">Save 25%</span></span>
+        </div>
+        <div class="pricing-grid fade-in">
+          <!-- FREE -->
+          <div class="pricing-card">
+            <div class="pricing-card-header">
+              <h3>Free</h3>
+              <div class="pricing-price">
+                <span class="price-amount">$0</span>
+                <span class="price-period">/month</span>
+              </div>
+              <p class="pricing-desc">Everything you need to get started.</p>
+            </div>
+            <ul class="pricing-features">
+              <li><span class="check">✓</span> 50 items total</li>
+              <li><span class="check">✓</span> 3 collections</li>
+              <li><span class="check">✓</span> Snippets, Prompts, Commands, Notes, Links</li>
+              <li><span class="check">✓</span> Basic search</li>
+              <li><span class="muted">✗</span> File &amp; Image uploads</li>
+              <li><span class="muted">✗</span> AI features</li>
+              <li><span class="muted">✗</span> Data export</li>
+            </ul>
+            <a href="#" class="btn btn-outline btn-block">Get Started Free</a>
+          </div>
+
+          <!-- PRO -->
+          <div class="pricing-card pricing-card-pro">
+            <div class="most-popular">Most Popular</div>
+            <div class="pricing-card-header">
+              <h3>Pro</h3>
+              <div class="pricing-price">
+                <span class="price-amount" id="proPrice">$8</span>
+                <span class="price-period" id="pricePeriod">/month</span>
+              </div>
+              <p class="pricing-desc" id="priceSubtext">Billed monthly. Cancel anytime.</p>
+            </div>
+            <ul class="pricing-features">
+              <li><span class="check">✓</span> Unlimited items</li>
+              <li><span class="check">✓</span> Unlimited collections</li>
+              <li><span class="check">✓</span> All item types incl. Files &amp; Images</li>
+              <li><span class="check">✓</span> Powerful search</li>
+              <li><span class="check">✓</span> File &amp; Image uploads</li>
+              <li><span class="check">✓</span> AI auto-tagging &amp; summaries</li>
+              <li><span class="check">✓</span> Data export (JSON / ZIP)</li>
+            </ul>
+            <a href="#" class="btn btn-primary btn-block">Upgrade to Pro</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section section fade-in">
+      <div class="container">
+        <div class="cta-inner">
+          <h2>Ready to organize your knowledge?</h2>
+          <p>Join developers who stopped losing their best work.</p>
+          <a href="#" class="btn btn-primary btn-lg">Get Started Free</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <a href="#" class="nav-logo">
+              <span class="logo-icon">⬡</span>
+              <span class="logo-text">DevStash</span>
+            </a>
+            <p>Your developer knowledge hub.</p>
+          </div>
+          <div class="footer-links">
+            <div class="footer-col">
+              <h4>Product</h4>
+              <a href="#features">Features</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#">Changelog</a>
+            </div>
+            <div class="footer-col">
+              <h4>Resources</h4>
+              <a href="#">Documentation</a>
+              <a href="#">Blog</a>
+              <a href="#">GitHub</a>
+            </div>
+            <div class="footer-col">
+              <h4>Company</h4>
+              <a href="#">About</a>
+              <a href="#">Privacy</a>
+              <a href="#">Terms</a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>&copy; <span id="footerYear"></span> DevStash. All rights reserved.</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

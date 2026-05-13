@@ -284,6 +284,18 @@ Not Started
 - Tests: 7 new cases in `src/actions/collections.test.ts` covering `updateCollection` (unauthorized, validation error, success, db exception) and `deleteCollection` (unauthorized, success, db exception)
 - All 50 Vitest tests pass; `npm run build` green
 
+### 2026-05-13 — Homepage Marketing Mockup
+- Created standalone `prototypes/homepage/` (index.html, styles.css, script.js) — no Next.js dependency
+- Hero: "chaos → order" concept with canvas-based floating icon animation (drift, bounce, mouse repel via `requestAnimationFrame`), pulsing SVG arrow, static dashboard preview mockup
+- Fixed navbar gets opaque on scroll; mobile hamburger toggles slide-down menu
+- Features section: 6 cards with per-type accent color glow (`color-mix` radial gradient overlay)
+- AI section: Pro badge + 4-item checklist + syntax-highlighted code mockup with animated AI-tag chips
+- Pricing section: Free vs Pro cards; monthly/yearly toggle flips price ($8/mo ↔ $72/yr)
+- CTA section + footer with dynamic copyright year
+- Scroll fade-in via `IntersectionObserver` on all `.fade-in` elements
+- Primary buttons: blue gradient + glow on hover + shimmer sweep animation; outline buttons: tinted bg + brighter border on hover; large buttons use heavier weight and more padding
+- Responsive: hero stacks vertically, arrow rotates 90°, single-column grids on mobile
+
 ### 2026-05-13 — Markdown Editor
 - Installed `react-markdown` and `remark-gfm`
 - Created `src/components/items/markdown-editor.tsx` — client component with Write/Preview tabs, macOS window dots + copy button in `bg-[#2d2d2d]` header (matching `CodeEditor` style), auto-growing textarea (min 80px, max 400px), GFM rendering via `react-markdown` + `remark-gfm`; readonly mode shows Preview tab only
