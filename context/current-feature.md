@@ -222,3 +222,12 @@ Not Started
 - `cursor-pointer` added to all action-bar buttons (Copy / Favorite / Pin / Edit / Delete), edit-mode Save / Cancel, and the AlertDialog Cancel / Delete buttons
 - `src/actions/items.test.ts` — 5 Vitest cases covering the new action (unauthorized, invalid id, not-found, success, db exception); mocks `@/auth` and `@/lib/db/items` at the import boundary
 - All 18 Vitest tests pass; `npm run build` green
+
+### 2026-05-13 — Item Create
+- `src/lib/validation/item.ts` — added `createItemSchema` with `superRefine`: type is one of `snippet|prompt|command|note|link` (file/image excluded as Pro/file-upload not built), content required for non-link types, URL required + `http(s)://` validated for link; tags trimmed and de-duped of empties; `CREATABLE_ITEM_TYPES` exported for the UI
+- `src/lib/db/items.ts` — `createItem(data)` query: resolves system `ItemType` by name, sets `contentType` (`URL` for link, `TEXT` otherwise), zeros out irrelevant fields per type (no `content` on link, no `url` on text types, `language` only for snippet/command), `connectOrCreate` tags; returns refreshed `ItemDetail`
+- `src/actions/items.ts` — `createItem(input)` server action: `auth()` gate, `safeParse` with `createItemSchema`, surfaces first Zod issue, returns `ActionResult<ItemDetail>`
+- `src/components/items/create-item-dialog.tsx` — shadcn Dialog client component with type chip selector (icon-colored), conditional fields (Content/Language for snippet+command/prompt+note, URL for link), controlled inputs, `useTransition`, toast on success, resets state on close, calls `router.refresh()`
+- `src/components/layout/dashboard-layout.tsx` — "New Item" button now opens the dialog (state lifted to layout); dialog mounted once alongside `ItemDrawer`
+- Tests: 8 new cases in `src/lib/validation/item.test.ts` (type enum, title required, content required for non-link, URL required+malformed for link, tag normalization) and 6 new in `src/actions/items.test.ts` (unauthorized, validation failures, success, null-from-query, db exception)
+- All 32 Vitest tests pass; `npm run build` green

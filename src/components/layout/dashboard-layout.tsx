@@ -8,6 +8,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SidebarNav } from './sidebar-nav';
 import { ItemDrawerProvider } from '@/components/items/item-drawer-context';
 import { ItemDrawer } from '@/components/items/item-drawer';
+import { CreateItemDialog } from '@/components/items/create-item-dialog';
 import { cn } from '@/lib/utils';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
@@ -28,6 +29,7 @@ type Props = {
 export function DashboardLayout({ children, itemTypes, collections, user }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   return (
     <ItemDrawerProvider>
@@ -61,7 +63,7 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
             <Plus className="size-4" />
             New Collection
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="cursor-pointer">
             <Plus className="size-4" />
             New Item
           </Button>
@@ -116,6 +118,7 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <ItemDrawer />
+      <CreateItemDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
     </ItemDrawerProvider>
   );
