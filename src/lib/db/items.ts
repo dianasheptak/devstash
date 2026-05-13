@@ -226,6 +226,51 @@ export async function updateItem(
   return getItemDetailById(itemId);
 }
 
+export type CreateItemData = {
+  type: 'snippet' | 'prompt' | 'command' | 'note' | 'link';
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+};
+
+export async function createItem(data: CreateItemData): Promise<ItemDetail | null> {
+  const userId = await getDemoUserId();
+  if (!userId) return null;
+
+  const itemType = await prisma.itemType.findFirst({
+    where: { name: data.type, isSystem: true },
+    select: { id: true },
+  });
+  if (!itemType) return null;
+
+  const contentType = data.type === 'link' ? 'URL' : 'TEXT';
+
+  const created = await prisma.item.create({
+    data: {
+      userId,
+      itemTypeId: itemType.id,
+      contentType,
+      title: data.title,
+      description: data.description,
+      content: data.type === 'link' ? null : data.content,
+      url: data.type === 'link' ? data.url : null,
+      language: data.type === 'snippet' || data.type === 'command' ? data.language : null,
+      tags: {
+        connectOrCreate: data.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+    select: { id: true },
+  });
+
+  return getItemDetailById(created.id);
+}
+
 export async function deleteItem(itemId: string): Promise<boolean> {
   const userId = await getDemoUserId();
   if (!userId) return false;

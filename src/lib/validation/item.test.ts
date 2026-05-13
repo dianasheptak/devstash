@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { updateItemSchema } from './item';
+import { updateItemSchema, createItemSchema } from './item';
 
 describe('updateItemSchema', () => {
   const base = {
@@ -69,5 +69,101 @@ describe('updateItemSchema', () => {
     const result = updateItemSchema.safeParse({ ...base, title: '  Hello  ' });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.title).toBe('Hello');
+  });
+});
+
+describe('createItemSchema', () => {
+  const baseSnippet = {
+    type: 'snippet' as const,
+    title: 'My Snippet',
+    description: '',
+    content: 'const x = 1;',
+    url: '',
+    language: 'typescript',
+    tags: [],
+  };
+
+  it('accepts a valid snippet payload', () => {
+    const result = createItemSchema.safeParse(baseSnippet);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.type).toBe('snippet');
+      expect(result.data.content).toBe('const x = 1;');
+      expect(result.data.url).toBeNull();
+    }
+  });
+
+  it('rejects unknown type', () => {
+    const result = createItemSchema.safeParse({ ...baseSnippet, type: 'file' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing title', () => {
+    const result = createItemSchema.safeParse({ ...baseSnippet, title: '   ' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toMatch(/title/i);
+    }
+  });
+
+  it('requires content for non-link types', () => {
+    const result = createItemSchema.safeParse({ ...baseSnippet, content: '' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(['content']);
+    }
+  });
+
+  it('requires URL for link type', () => {
+    const result = createItemSchema.safeParse({
+      type: 'link',
+      title: 'A link',
+      description: '',
+      content: '',
+      url: '',
+      language: '',
+      tags: [],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(['url']);
+    }
+  });
+
+  it('accepts a valid link with URL and ignores content requirement', () => {
+    const result = createItemSchema.safeParse({
+      type: 'link',
+      title: 'Docs',
+      description: '',
+      content: '',
+      url: 'https://example.com',
+      language: '',
+      tags: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a malformed link URL', () => {
+    const result = createItemSchema.safeParse({
+      type: 'link',
+      title: 'Bad',
+      description: '',
+      content: '',
+      url: 'notaurl',
+      language: '',
+      tags: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('normalizes tags', () => {
+    const result = createItemSchema.safeParse({
+      ...baseSnippet,
+      tags: ['react', '  hooks  ', '', 'ts'],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tags).toEqual(['react', 'hooks', 'ts']);
+    }
   });
 });
