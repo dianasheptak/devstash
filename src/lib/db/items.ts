@@ -127,6 +127,19 @@ export async function getRecentItems(limit = 10): Promise<ItemWithMeta[]> {
   return items.map(mapItem);
 }
 
+export async function getItemsByType(typeName: string): Promise<ItemWithMeta[]> {
+  const userId = await getDemoUserId();
+  if (!userId) return [];
+
+  const items = await prisma.item.findMany({
+    where: { userId, itemType: { name: typeName, isSystem: true } },
+    orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+    include: itemInclude,
+  });
+
+  return items.map(mapItem);
+}
+
 export async function getItemStats(): Promise<{ total: number; favorites: number }> {
   const userId = await getDemoUserId();
   if (!userId) return { total: 0, favorites: 0 };
