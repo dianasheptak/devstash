@@ -272,6 +272,18 @@ Not Started
 - "View all collections →" sidebar link was already pointing to `/collections`; collection card hrefs were already slug-based from the previous feature
 - All 43 Vitest tests pass; `npm run build` green
 
+### 2026-05-13 — Collection Actions (Edit, Delete, Favorite)
+- `src/lib/validation/collection.ts` — added `updateCollectionSchema` (same fields as create: trimmed name min 1/max 100, nullable description)
+- `src/lib/db/collections.ts` — added `updateCollection(collectionId, userId, data)` (ownership check, prisma update) and `deleteCollection(collectionId, userId)` (ownership check, prisma delete); fixed `dominantColor` fallback from `hsl(var(--border))` (unreliable in inline styles) to `#4b5563` (gray-600, always visible on dark backgrounds)
+- `src/actions/collections.ts` — added `updateCollection(collectionId, input)` and `deleteCollection(collectionId)` server actions: `auth()` gate, Zod validation, ownership-scoped DB calls, `ActionResult` shape
+- `src/components/collections/edit-collection-dialog.tsx` — new Dialog client component pre-filled with current name/description; resets on open via `useEffect`; calls `updateCollection` action, toasts, `router.refresh()`
+- `src/components/collections/collection-actions.tsx` — new client component for the `/collections/[slug]` page header: Favorite (star, UI-only/disabled), Edit (pencil → opens `EditCollectionDialog`), Delete (trash → `AlertDialog` confirmation → `deleteCollection` → `router.push('/collections')`)
+- `src/components/collections/collection-card.tsx` — converted from server to client component; card body navigates via `router.push()` on click; 3-dots `DropdownMenuTrigger` uses `e.stopPropagation()`; dropdown contains Edit, Favorite (disabled), Delete; inline `EditCollectionDialog` + `AlertDialog` per card
+- `src/app/collections/[slug]/page.tsx` — header updated to use `CollectionActions`; removed hardcoded favorite `Star` icon (now handled by `CollectionActions`)
+- `src/components/ui/dropdown-menu.tsx` — installed via shadcn (Base UI `Menu` primitive)
+- Tests: 7 new cases in `src/actions/collections.test.ts` covering `updateCollection` (unauthorized, validation error, success, db exception) and `deleteCollection` (unauthorized, success, db exception)
+- All 50 Vitest tests pass; `npm run build` green
+
 ### 2026-05-13 — Markdown Editor
 - Installed `react-markdown` and `remark-gfm`
 - Created `src/components/items/markdown-editor.tsx` — client component with Write/Preview tabs, macOS window dots + copy button in `bg-[#2d2d2d]` header (matching `CodeEditor` style), auto-growing textarea (min 80px, max 400px), GFM rendering via `react-markdown` + `remark-gfm`; readonly mode shows Preview tab only
