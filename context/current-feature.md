@@ -202,3 +202,14 @@ Not Started
 - `src/lib/db/items.ts` — new `ItemDetail` type and `getItemDetailById(id)` returning full content + language + file fields + joined collections; scoped to demo user matching the rest of the module
 - `GET /api/items/[id]` (`src/app/api/items/[id]/route.ts`) — `auth()`-gated, returns `{ item }` or 401/404; powers the drawer's fetch-on-click
 - `DashboardLayout` wraps children in `<ItemDrawerProvider>` and mounts `<ItemDrawer />` once so both dashboard and items routes get the drawer for free
+
+### 2026-05-13 — Item Drawer Edit Mode
+- Edit button in the item drawer toggles into inline edit mode; action bar becomes Save / Cancel (Save disabled when title is empty or pending)
+- Editable fields: title (required), description, tags (comma-separated); type-specific Content (snippet/prompt/command/note), Language (snippet/command), URL (link); item type, collections, and timestamps are read-only
+- `src/lib/validation/item.ts` — `updateItemSchema` (Zod): trims/nulls empty strings, validates `http(s)://` URL, splits/trims tags and drops empties. Extracted to its own module so Vitest can import it without pulling in the NextAuth/edge import chain
+- `src/lib/validation/item.test.ts` — 7 Vitest cases covering title trim/required, tag normalization, URL valid/invalid/empty, default nulls
+- `src/actions/items.ts` — `updateItem(itemId, input)` server action: `auth()` gate, `safeParse` with `updateItemSchema`, calls `updateItem` query, returns `{ success, data, error }` and surfaces the first Zod issue as the error message
+- `src/lib/db/items.ts` — new `updateItem(itemId, data)` query: ownership check via `findFirst({ id, userId })`, `prisma.item.update` with `tags: { set: [], connectOrCreate }` for replace-on-update semantics; returns refreshed `ItemDetail` via `getItemDetailById`
+- `item-drawer.tsx` — new `DrawerEdit` view with controlled inputs and `useTransition`; toasts on save success/error and calls `router.refresh()` so the underlying card list reflects changes
+- Installed `zod@^4.4.3`; added `src/components/ui/textarea.tsx` via shadcn
+- All 13 Vitest tests pass; `npm run build` green

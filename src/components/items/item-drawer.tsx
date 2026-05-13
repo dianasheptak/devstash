@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Copy, Star, Pin, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -11,23 +12,29 @@ import {
 } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ICON_MAP } from '@/lib/constants/item-types';
 import { useItemDrawer } from './item-drawer-context';
+import { updateItem } from '@/actions/items';
 import type { ItemDetail } from '@/lib/db/items';
 
 export function ItemDrawer() {
   const { openItemId, close } = useItemDrawer();
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!openItemId) {
       setItem(null);
+      setIsEditing(false);
       return;
     }
     let cancelled = false;
     setLoading(true);
     setItem(null);
+    setIsEditing(false);
     fetch(`/api/items/${openItemId}`)
       .then(async (res) => {
         if (!res.ok) throw new Error(`Failed (${res.status})`);
@@ -72,8 +79,21 @@ export function ItemDrawer() {
       >
         {loading || !item ? (
           <DrawerSkeleton />
+        ) : isEditing ? (
+          <DrawerEdit
+            item={item}
+            onCancel={() => setIsEditing(false)}
+            onSaved={(updated) => {
+              setItem(updated);
+              setIsEditing(false);
+            }}
+          />
         ) : (
-          <DrawerBody item={item} onCopy={handleCopy} />
+          <DrawerBody
+            item={item}
+            onCopy={handleCopy}
+            onEdit={() => setIsEditing(true)}
+          />
         )}
       </SheetContent>
     </Sheet>
@@ -83,9 +103,11 @@ export function ItemDrawer() {
 function DrawerBody({
   item,
   onCopy,
+  onEdit,
 }: {
   item: ItemDetail;
   onCopy: () => void;
+  onEdit: () => void;
 }) {
   const Icon = ICON_MAP[item.itemType.icon];
 
@@ -138,7 +160,7 @@ function DrawerBody({
           />
           {item.isPinned ? 'Pinned' : 'Pin'}
         </Button>
-        <Button size="sm" variant="ghost">
+        <Button size="sm" variant="ghost" onClick={onEdit}>
           <Pencil className="size-3.5" />
           Edit
         </Button>
@@ -219,6 +241,165 @@ function DrawerBody({
             </div>
           </Section>
         )}
+      </div>
+    </div>
+  );
+}
+
+function DrawerEdit({
+  item,
+  onCancel,
+  onSaved,
+}: {
+  item: ItemDetail;
+  onCancel: () => void;
+  onSaved: (updated: ItemDetail) => void;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const Icon = ICON_MAP[item.itemType.icon];
+
+  const [title, setTitle] = useState(item.title);
+  const [description, setDescription] = useState(item.description ?? '');
+  const [content, setContent] = useState(item.content ?? '');
+  const [language, setLanguage] = useState(item.language ?? '');
+  const [url, setUrl] = useState(item.url ?? '');
+  const [tagsCsv, setTagsCsv] = useState(item.tags.join(', '));
+
+  const typeName = item.itemType.name;
+  const showContent = ['snippet', 'prompt', 'command', 'note'].includes(typeName);
+  const showLanguage = ['snippet', 'command'].includes(typeName);
+  const showUrl = typeName === 'link';
+
+  const titleEmpty = title.trim().length === 0;
+
+  const handleSave = () => {
+    startTransition(async () => {
+      const tags = tagsCsv
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+
+      const result = await updateItem(item.id, {
+        title,
+        description,
+        content: showContent ? content : '',
+        language: showLanguage ? language : '',
+        url: showUrl ? url : '',
+        tags,
+      });
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success('Item updated');
+      onSaved(result.data);
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className="flex flex-col">
+      <SheetHeader className="border-b">
+        <div className="flex items-center gap-2 pr-8">
+          {Icon && (
+            <span className="size-5 shrink-0" style={{ color: item.itemType.color }}>
+              <Icon className="size-5" />
+            </span>
+          )}
+          <SheetTitle className="truncate flex-1">Editing item</SheetTitle>
+        </div>
+        <div className="flex items-center gap-1.5 mt-1">
+          <Badge
+            variant="secondary"
+            className="capitalize"
+            style={{ color: item.itemType.color }}
+          >
+            {item.itemType.name}
+          </Badge>
+        </div>
+      </SheetHeader>
+
+      {/* Edit action bar */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b">
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={titleEmpty || isPending}
+        >
+          {isPending ? 'Saving...' : 'Save'}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isPending}
+        >
+          Cancel
+        </Button>
+      </div>
+
+      {/* Edit form */}
+      <div className="flex flex-col gap-5 p-4">
+        <Section label="Title">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Item title"
+            required
+          />
+        </Section>
+
+        <Section label="Description">
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Optional description"
+            rows={3}
+          />
+        </Section>
+
+        {showContent && (
+          <Section label="Content">
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Content"
+              rows={10}
+              className="font-mono text-xs"
+            />
+          </Section>
+        )}
+
+        {showLanguage && (
+          <Section label="Language">
+            <Input
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              placeholder="e.g. typescript"
+            />
+          </Section>
+        )}
+
+        {showUrl && (
+          <Section label="URL">
+            <Input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+            />
+          </Section>
+        )}
+
+        <Section label="Tags">
+          <Input
+            value={tagsCsv}
+            onChange={(e) => setTagsCsv(e.target.value)}
+            placeholder="comma, separated, tags"
+          />
+        </Section>
       </div>
     </div>
   );
