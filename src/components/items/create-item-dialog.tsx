@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Code, Sparkles, Terminal, StickyNote, Link as LinkIcon, type LucideIcon } from 'lucide-react';
@@ -20,6 +20,7 @@ import {
   CREATABLE_ITEM_TYPES,
   type CreatableItemType,
 } from '@/lib/validation/item';
+import { CodeEditor } from './code-editor';
 import { cn } from '@/lib/utils';
 
 const TYPE_META: Record<CreatableItemType, { icon: LucideIcon; color: string; label: string }> = {
@@ -33,12 +34,13 @@ const TYPE_META: Record<CreatableItemType, { icon: LucideIcon; color: string; la
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultType?: CreatableItemType;
 };
 
-export function CreateItemDialog({ open, onOpenChange }: Props) {
+export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [type, setType] = useState<CreatableItemType>('snippet');
+  const [type, setType] = useState<CreatableItemType>(defaultType ?? 'snippet');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
@@ -46,8 +48,12 @@ export function CreateItemDialog({ open, onOpenChange }: Props) {
   const [language, setLanguage] = useState('');
   const [tags, setTags] = useState('');
 
+  useEffect(() => {
+    if (open) setType(defaultType ?? 'snippet');
+  }, [open, defaultType]);
+
   const reset = () => {
-    setType('snippet');
+    setType(defaultType ?? 'snippet');
     setTitle('');
     setDescription('');
     setContent('');
@@ -98,7 +104,7 @@ export function CreateItemDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>New Item</DialogTitle>
           <DialogDescription>
@@ -160,21 +166,6 @@ export function CreateItemDialog({ open, onOpenChange }: Props) {
             />
           </div>
 
-          {showContent && (
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="ci-content" className="text-xs font-medium text-muted-foreground">
-                Content
-              </label>
-              <Textarea
-                id="ci-content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={6}
-                className="font-mono text-xs"
-              />
-            </div>
-          )}
-
           {showLanguage && (
             <div className="flex flex-col gap-1.5">
               <label htmlFor="ci-language" className="text-xs font-medium text-muted-foreground">
@@ -186,6 +177,28 @@ export function CreateItemDialog({ open, onOpenChange }: Props) {
                 onChange={(e) => setLanguage(e.target.value)}
                 placeholder="e.g. typescript, bash"
               />
+            </div>
+          )}
+
+          {showContent && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                Content
+              </label>
+              {showLanguage ? (
+                <CodeEditor
+                  value={content}
+                  onChange={setContent}
+                  language={language || undefined}
+                />
+              ) : (
+                <Textarea
+                  id="ci-content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={6}
+                />
+              )}
             </div>
           )}
 

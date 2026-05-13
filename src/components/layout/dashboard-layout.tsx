@@ -8,7 +8,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SidebarNav } from './sidebar-nav';
 import { ItemDrawerProvider } from '@/components/items/item-drawer-context';
 import { ItemDrawer } from '@/components/items/item-drawer';
-import { CreateItemDialog } from '@/components/items/create-item-dialog';
+import { CreateItemProvider, useCreateItem } from '@/components/items/create-item-context';
 import { cn } from '@/lib/utils';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
@@ -27,12 +27,23 @@ type Props = {
 };
 
 export function DashboardLayout({ children, itemTypes, collections, user }: Props) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-
   return (
     <ItemDrawerProvider>
+      <CreateItemProvider>
+        <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
+          {children}
+        </DashboardLayoutInner>
+      </CreateItemProvider>
+    </ItemDrawerProvider>
+  );
+}
+
+function DashboardLayoutInner({ children, itemTypes, collections, user }: Props) {
+  const { open: openCreate } = useCreateItem();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Top bar */}
       <header className="relative flex items-center px-4 h-14 border-b border-border shrink-0">
@@ -63,7 +74,7 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
             <Plus className="size-4" />
             New Collection
           </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="cursor-pointer">
+          <Button size="sm" onClick={() => openCreate()} className="cursor-pointer">
             <Plus className="size-4" />
             New Item
           </Button>
@@ -118,8 +129,6 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
       <ItemDrawer />
-      <CreateItemDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
-    </ItemDrawerProvider>
   );
 }

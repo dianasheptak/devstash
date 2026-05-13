@@ -27,7 +27,13 @@ import {
 import { ICON_MAP } from '@/lib/constants/item-types';
 import { useItemDrawer } from './item-drawer-context';
 import { updateItem, deleteItem } from '@/actions/items';
+import { CodeEditor } from './code-editor';
 import type { ItemDetail } from '@/lib/db/items';
+
+const CODE_TYPES = ['snippet', 'command'] as const;
+type CodeType = (typeof CODE_TYPES)[number];
+const isCodeType = (name: string): name is CodeType =>
+  (CODE_TYPES as readonly string[]).includes(name);
 
 export function ItemDrawer() {
   const router = useRouter();
@@ -246,9 +252,17 @@ function DrawerBody({
 
         {item.contentType === 'TEXT' && item.content && (
           <Section label="Content">
-            <pre className="text-xs font-mono bg-muted/40 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-              {item.content}
-            </pre>
+            {isCodeType(item.itemType.name) ? (
+              <CodeEditor
+                value={item.content}
+                language={item.language ?? undefined}
+                readOnly
+              />
+            ) : (
+              <pre className="text-xs font-mono bg-muted/40 rounded p-3 overflow-x-auto whitespace-pre-wrap">
+                {item.content}
+              </pre>
+            )}
           </Section>
         )}
 
@@ -424,13 +438,20 @@ function DrawerEdit({
 
         {showContent && (
           <Section label="Content">
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Content"
-              rows={10}
-              className="font-mono text-xs"
-            />
+            {isCodeType(typeName) ? (
+              <CodeEditor
+                value={content}
+                onChange={setContent}
+                language={language || undefined}
+              />
+            ) : (
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Content"
+                rows={10}
+              />
+            )}
           </Section>
         )}
 

@@ -223,6 +223,15 @@ Not Started
 - `src/actions/items.test.ts` — 5 Vitest cases covering the new action (unauthorized, invalid id, not-found, success, db exception); mocks `@/auth` and `@/lib/db/items` at the import boundary
 - All 18 Vitest tests pass; `npm run build` green
 
+### 2026-05-13 — Code Editor (Monaco)
+- Installed `@monaco-editor/react`; created `src/components/items/code-editor.tsx` — client component wrapping Monaco with VS Dark theme, macOS window dots (red/yellow/green), language label, copy button, dynamic height (min 80px, max 400px via `onDidContentSizeChange`), thin scrollbars
+- `item-drawer.tsx` — display mode replaces `<pre>` with `<CodeEditor readOnly>` for snippet/command types; edit mode replaces `<Textarea>` with `<CodeEditor>` for snippet/command; prompt/note keep `<Textarea>`; `isCodeType` guard defined once at module scope
+- `create-item-dialog.tsx` — Language field moved before Content for snippet/command; Content field uses `<CodeEditor>` for snippet/command (language prop wired so syntax highlighting updates live as user types the language); dialog widened to `max-w-2xl`; `defaultType` prop + `useEffect` to sync type when dialog opens
+- `create-item-context.tsx` — `CreateItemProvider` + `useCreateItem()` context; holds `isOpen`/`defaultType` state and renders `<CreateItemDialog>` once; replaces the ad-hoc `createOpen` state that was in `DashboardLayout`
+- `DashboardLayout` refactored into outer `DashboardLayout` (wraps `ItemDrawerProvider` + `CreateItemProvider`) and inner `DashboardLayoutInner` (uses `useCreateItem().open()`); "New Item" header button calls `open()` with no type arg
+- `add-type-button.tsx` — small client button using `useCreateItem().open(type)`; rendered in the `/items/[type]` page header for the 5 creatable types (snippet/prompt/command/note/link); absent for file/image (Pro types)
+- All 32 Vitest tests pass; `npm run build` green
+
 ### 2026-05-13 — Item Create
 - `src/lib/validation/item.ts` — added `createItemSchema` with `superRefine`: type is one of `snippet|prompt|command|note|link` (file/image excluded as Pro/file-upload not built), content required for non-link types, URL required + `http(s)://` validated for link; tags trimmed and de-duped of empties; `CREATABLE_ITEM_TYPES` exported for the UI
 - `src/lib/db/items.ts` — `createItem(data)` query: resolves system `ItemType` by name, sets `contentType` (`URL` for link, `TEXT` otherwise), zeros out irrelevant fields per type (no `content` on link, no `url` on text types, `language` only for snippet/command), `connectOrCreate` tags; returns refreshed `ItemDetail`

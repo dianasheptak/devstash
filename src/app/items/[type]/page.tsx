@@ -5,6 +5,8 @@ import { ICON_MAP, slugToTypeName } from '@/lib/constants/item-types';
 import { getItemsByType } from '@/lib/db/items';
 import { prisma } from '@/lib/prisma';
 import { ItemCard } from '@/components/items/item-card';
+import { AddTypeButton } from '@/components/items/add-type-button';
+import { CREATABLE_ITEM_TYPES, type CreatableItemType } from '@/lib/validation/item';
 
 const TYPE_LABEL_PLURAL: Record<string, string> = {
   snippet: 'Snippets',
@@ -35,6 +37,7 @@ export default async function ItemsByTypePage({
 
   const Icon = itemType ? ICON_MAP[itemType.icon] : null;
   const label = TYPE_LABEL_PLURAL[typeName];
+  const isCreatable = (CREATABLE_ITEM_TYPES as readonly string[]).includes(typeName);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -48,6 +51,11 @@ export default async function ItemsByTypePage({
         <span className="text-sm text-muted-foreground">
           {items.length} {items.length === 1 ? 'item' : 'items'}
         </span>
+        {isCreatable && (
+          <div className="ml-auto">
+            <AddTypeButton type={typeName as CreatableItemType} label={label.slice(0, -1)} />
+          </div>
+        )}
       </header>
 
       {items.length === 0 ? (
