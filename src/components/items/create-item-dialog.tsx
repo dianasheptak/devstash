@@ -21,6 +21,7 @@ import {
   type CreatableItemType,
 } from '@/lib/validation/item';
 import { CodeEditor } from './code-editor';
+import { MarkdownEditor } from './markdown-editor';
 import { cn } from '@/lib/utils';
 
 const TYPE_META: Record<CreatableItemType, { icon: LucideIcon; color: string; label: string }> = {
@@ -192,11 +193,10 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
                   language={language || undefined}
                 />
               ) : (
-                <Textarea
-                  id="ci-content"
+                <MarkdownEditor
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={6}
+                  onChange={setContent}
+                  placeholder="Write markdown content..."
                 />
               )}
             </div>

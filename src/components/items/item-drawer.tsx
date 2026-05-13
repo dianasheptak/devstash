@@ -28,6 +28,7 @@ import { ICON_MAP } from '@/lib/constants/item-types';
 import { useItemDrawer } from './item-drawer-context';
 import { updateItem, deleteItem } from '@/actions/items';
 import { CodeEditor } from './code-editor';
+import { MarkdownEditor } from './markdown-editor';
 import type { ItemDetail } from '@/lib/db/items';
 
 const CODE_TYPES = ['snippet', 'command'] as const;
@@ -259,9 +260,7 @@ function DrawerBody({
                 readOnly
               />
             ) : (
-              <pre className="text-xs font-mono bg-muted/40 rounded p-3 overflow-x-auto whitespace-pre-wrap">
-                {item.content}
-              </pre>
+              <MarkdownEditor value={item.content} readOnly />
             )}
           </Section>
         )}
@@ -445,11 +444,10 @@ function DrawerEdit({
                 language={language || undefined}
               />
             ) : (
-              <Textarea
+              <MarkdownEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Content"
-                rows={10}
+                onChange={setContent}
+                placeholder="Write markdown content..."
               />
             )}
           </Section>

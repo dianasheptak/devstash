@@ -240,3 +240,11 @@ Not Started
 - `src/components/layout/dashboard-layout.tsx` — "New Item" button now opens the dialog (state lifted to layout); dialog mounted once alongside `ItemDrawer`
 - Tests: 8 new cases in `src/lib/validation/item.test.ts` (type enum, title required, content required for non-link, URL required+malformed for link, tag normalization) and 6 new in `src/actions/items.test.ts` (unauthorized, validation failures, success, null-from-query, db exception)
 - All 32 Vitest tests pass; `npm run build` green
+
+### 2026-05-13 — Markdown Editor
+- Installed `react-markdown` and `remark-gfm`
+- Created `src/components/items/markdown-editor.tsx` — client component with Write/Preview tabs, macOS window dots + copy button in `bg-[#2d2d2d]` header (matching `CodeEditor` style), auto-growing textarea (min 80px, max 400px), GFM rendering via `react-markdown` + `remark-gfm`; readonly mode shows Preview tab only
+- Added `.markdown-preview` CSS class to `src/app/globals.css` — dark-themed prose styles for h1–h6, paragraphs, ordered/unordered lists, blockquotes with left border accent, inline + block code, links with hover, tables with header background, task list checkboxes
+- `item-drawer.tsx` — display mode: replaced `<pre>` with `<MarkdownEditor readOnly>` for prompt/note content; edit mode: replaced `<Textarea>` with `<MarkdownEditor>` for prompt/note content; snippet/command continue to use `<CodeEditor>` unchanged
+- `create-item-dialog.tsx` — replaced `<Textarea>` with `<MarkdownEditor>` for prompt/note content field; snippet/command continue to use `<CodeEditor>`
+- All 32 Vitest tests pass; `npm run build` green
