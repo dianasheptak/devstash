@@ -213,3 +213,12 @@ Not Started
 - `item-drawer.tsx` — new `DrawerEdit` view with controlled inputs and `useTransition`; toasts on save success/error and calls `router.refresh()` so the underlying card list reflects changes
 - Installed `zod@^4.4.3`; added `src/components/ui/textarea.tsx` via shadcn
 - All 13 Vitest tests pass; `npm run build` green
+
+### 2026-05-13 — Item Delete
+- `src/lib/db/items.ts` — `deleteItem(itemId)` query: ownership check via `findFirst({ id, userId })`, then `prisma.item.delete`. `ItemCollection` join rows cascade automatically; tags are M:N and untouched
+- `src/actions/items.ts` — `deleteItem(itemId)` server action: `auth()` gate, id validation, calls db query, returns `{ success: true, data: { id } }` or `{ success: false, error }`
+- `src/components/ui/alert-dialog.tsx` — added via shadcn CLI
+- `src/components/items/item-drawer.tsx` — Delete button now opens an `AlertDialog` confirmation (destructive variant on the confirm button, item title quoted in the description). On confirm: invokes the server action inside a `useTransition`, toasts success/error, closes the drawer, and calls `router.refresh()` so the underlying list updates
+- `cursor-pointer` added to all action-bar buttons (Copy / Favorite / Pin / Edit / Delete), edit-mode Save / Cancel, and the AlertDialog Cancel / Delete buttons
+- `src/actions/items.test.ts` — 5 Vitest cases covering the new action (unauthorized, invalid id, not-found, success, db exception); mocks `@/auth` and `@/lib/db/items` at the import boundary
+- All 18 Vitest tests pass; `npm run build` green

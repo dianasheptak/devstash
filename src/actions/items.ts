@@ -1,7 +1,10 @@
 'use server';
 
 import { auth } from '@/auth';
-import { updateItem as updateItemQuery } from '@/lib/db/items';
+import {
+  updateItem as updateItemQuery,
+  deleteItem as deleteItemQuery,
+} from '@/lib/db/items';
 import type { ItemDetail } from '@/lib/db/items';
 import { updateItemSchema, type UpdateItemInput } from '@/lib/validation/item';
 
@@ -36,5 +39,28 @@ export async function updateItem(
     return { success: true, data: updated };
   } catch {
     return { success: false, error: 'Failed to update item' };
+  }
+}
+
+export async function deleteItem(
+  itemId: string
+): Promise<ActionResult<{ id: string }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  if (!itemId || typeof itemId !== 'string') {
+    return { success: false, error: 'Invalid item id' };
+  }
+
+  try {
+    const deleted = await deleteItemQuery(itemId);
+    if (!deleted) {
+      return { success: false, error: 'Item not found' };
+    }
+    return { success: true, data: { id: itemId } };
+  } catch {
+    return { success: false, error: 'Failed to delete item' };
   }
 }
