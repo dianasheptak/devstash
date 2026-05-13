@@ -1,12 +1,24 @@
-# Current Feature
+# Current Feature: Collections Pages
 
 ## Status
 
-Not Started
+Complete
 
 ## Goals
 
+- Create `/collections` page listing all user collections using existing `CollectionCard`
+- Create `/collections/[slug]` page showing items in a specific collection using existing `ItemCard`
+- Link "View all collections →" in the sidebar to `/collections`
+- Link all collection cards (dashboard + sidebar) to their specific `/collections/[slug]` page
+
 ## Notes
+
+- Use slug-based routing (already computed via `toSlug()` in `src/lib/db/collections.ts`)
+- Reuse `CollectionCard` for the list page and `ItemCard` for the detail page
+- Both routes must sit under the items layout or get their own layout with `DashboardLayout`
+- Auth gate: redirect unauthed users to `/sign-in`
+- Collection detail page should show collection name, description, item count, and the items grid
+- Empty state needed for both pages (no collections / no items in collection)
 
 ## History
 
@@ -260,6 +272,16 @@ Not Started
 - `src/components/items/create-item-dialog.tsx` — fetches `/api/collections` on open, renders `CollectionPicker` after Tags field, passes `collectionIds` to `createItem` action
 - `src/components/items/item-drawer.tsx` — `DrawerEdit` fetches collections on mount, pre-selects from `item.collections`, passes `collectionIds` to `updateItem`
 - `src/components/collections/collection-card.tsx` and `src/components/layout/sidebar-nav.tsx` — collection hrefs changed from `/collections/{id}` to `/collections/{slug}`
+- All 43 Vitest tests pass; `npm run build` green
+
+### 2026-05-13 — Collections Pages
+- Added `getAllCollections()` to `src/lib/db/collections.ts` — returns all user collections with `CollectionWithMeta` shape (no limit), ordered by `createdAt desc`
+- Added `CollectionPage` type and `getCollectionBySlug(slug)` to `src/lib/db/collections.ts` — fetches all user collections, finds match by `toSlug(name) === slug`, returns collection meta + items as `ItemWithMeta[]` ordered by `isPinned desc` then `addedAt desc`; returns `null` when not found
+- `src/proxy.ts` matcher extended to `/collections/:path*` for auth gating
+- `src/app/collections/layout.tsx` — same pattern as `items/layout.tsx`: auth gate, fetches item types + sidebar collections in parallel, wraps in `DashboardLayout`
+- `src/app/collections/page.tsx` — lists all collections in a 3-column grid using existing `CollectionCard`; empty state for no collections
+- `src/app/collections/[slug]/page.tsx` — shows collection name, description, dominant-color dot, favorite star, item count; items grid (1 col mobile, 2 at md+) using existing `ItemCard`; `notFound()` on invalid slug; empty state for empty collection
+- "View all collections →" sidebar link was already pointing to `/collections`; collection card hrefs were already slug-based from the previous feature
 - All 43 Vitest tests pass; `npm run build` green
 
 ### 2026-05-13 — Markdown Editor
