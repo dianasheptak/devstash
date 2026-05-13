@@ -186,3 +186,10 @@ Not Started
 - `getItemsByType()` added to `src/lib/db/items.ts` — scoped to demo user, system-type-only filter, ordered by `isPinned desc` then `createdAt desc`
 - `ITEM_TYPE_NAMES`, `ItemTypeName`, and `slugToTypeName()` helper added to `src/lib/constants/item-types.ts` (plural slug → singular type name; null for unknown)
 - Header shows type-colored icon, plural label, and item count; empty state is a dashed-border placeholder; grid is 1 column on mobile, 2 at `md+`; reuses existing `ItemCard` so type-colored left border carries over
+
+### 2026-05-13 — Vitest Setup
+- Installed `vitest@^4.1.6` as a dev dependency; added `npm run test` (watch) and `npm run test:run` (CI) scripts
+- `vitest.config.ts` — node environment, `resolve.tsconfigPaths: true` (Vitest 4 native — no `vite-tsconfig-paths` plugin needed), `include: ['src/**/*.{test,spec}.ts']`, `.tsx` test files explicitly excluded
+- **Scope:** server actions and utilities only. Components are intentionally not unit-tested
+- Seed tests co-located with source: `src/lib/initials.test.ts` (4 cases on `getInitials`) and `src/lib/constants/item-types.test.ts` (3 cases on `slugToTypeName`). All 6 tests pass
+- Updated `CLAUDE.md` (commands + testing scope) and `context/ai-interaction.md` (workflow step 4 now requires tests when touching `src/lib/**`; new "Testing" section; commit gate requires tests passing)

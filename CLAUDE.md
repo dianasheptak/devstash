@@ -18,9 +18,11 @@ npm run dev      # Start dev server (Turbopack)
 npm run build    # Production build
 npm run start    # Start production server
 npm run lint     # Run ESLint
+npm run test     # Run Vitest in watch mode
+npm run test:run # Run Vitest once (CI mode)
 ```
 
-No test framework is configured.
+**Testing scope:** Vitest covers **server actions and utilities only** (`src/**/*.test.ts`). React components are intentionally **not** unit-tested — `.test.tsx` files are excluded by `vitest.config.ts`. Co-locate test files next to the module under test (e.g., `src/lib/initials.test.ts`).
 
 ## Neon Database
 
