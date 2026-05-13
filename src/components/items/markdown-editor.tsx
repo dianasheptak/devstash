@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const MAX_HEIGHT = 400;
-const MIN_HEIGHT = 80;
+const MAX_HEIGHT = 500;
+const MIN_HEIGHT = 300;
 
 interface MarkdownEditorProps {
   value: string;
