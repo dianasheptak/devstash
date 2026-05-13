@@ -1,24 +1,12 @@
-# Current Feature: Collections Pages
+# Current Feature
 
 ## Status
 
-Complete
+Not Started
 
 ## Goals
 
-- Create `/collections` page listing all user collections using existing `CollectionCard`
-- Create `/collections/[slug]` page showing items in a specific collection using existing `ItemCard`
-- Link "View all collections →" in the sidebar to `/collections`
-- Link all collection cards (dashboard + sidebar) to their specific `/collections/[slug]` page
-
 ## Notes
-
-- Use slug-based routing (already computed via `toSlug()` in `src/lib/db/collections.ts`)
-- Reuse `CollectionCard` for the list page and `ItemCard` for the detail page
-- Both routes must sit under the items layout or get their own layout with `DashboardLayout`
-- Auth gate: redirect unauthed users to `/sign-in`
-- Collection detail page should show collection name, description, item count, and the items grid
-- Empty state needed for both pages (no collections / no items in collection)
 
 ## History
 
