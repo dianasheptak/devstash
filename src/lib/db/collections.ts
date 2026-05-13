@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import type { CreateCollectionParsed } from '@/lib/validation/collection';
+import type { CreateCollectionParsed, UpdateCollectionParsed } from '@/lib/validation/collection';
 import type { ItemWithMeta } from '@/lib/db/items';
 
 function toSlug(name: string): string {
@@ -68,7 +68,7 @@ export async function getRecentCollections(limit = 6): Promise<CollectionWithMet
       .sort((a, b) => b[1] - a[1])[0]?.[0];
 
     const dominantColor =
-      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? 'hsl(var(--border))';
+      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? '#4b5563';
 
     return {
       id: col.id,
@@ -131,7 +131,7 @@ export async function getSidebarCollections(limit = 20): Promise<SidebarCollecti
       slug: toSlug(col.name),
       isFavorite: col.isFavorite,
       itemCount: col.items.length,
-      dominantColor: dominantEntry?.color ?? 'hsl(var(--border))',
+      dominantColor: dominantEntry?.color ?? '#4b5563',
     };
   });
 }
@@ -208,7 +208,7 @@ export async function getAllCollections(): Promise<CollectionWithMeta[]> {
     }, {});
     const dominantTypeId = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
     const dominantColor =
-      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? 'hsl(var(--border))';
+      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? '#4b5563';
 
     return {
       id: col.id,
@@ -260,7 +260,7 @@ export async function getCollectionBySlug(slug: string): Promise<CollectionPage 
   }, {});
   const dominantTypeName = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
   const dominantColor =
-    uniqueTypes.find((t) => t.name === dominantTypeName)?.color ?? 'hsl(var(--border))';
+    uniqueTypes.find((t) => t.name === dominantTypeName)?.color ?? '#4b5563';
 
   return {
     id: col.id,
@@ -286,6 +286,35 @@ export async function getCollectionBySlug(slug: string): Promise<CollectionPage 
       tags: item.tags.map((t) => t.name),
     })),
   };
+}
+
+export async function updateCollection(
+  collectionId: string,
+  userId: string,
+  data: UpdateCollectionParsed
+): Promise<CollectionDetail> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  });
+  if (!existing) throw new Error('Not found');
+
+  return prisma.collection.update({
+    where: { id: collectionId },
+    data: { name: data.name, description: data.description },
+    select: { id: true, name: true, description: true, isFavorite: true, createdAt: true },
+  });
+}
+
+export async function deleteCollection(
+  collectionId: string,
+  userId: string
+): Promise<void> {
+  const existing = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+  });
+  if (!existing) throw new Error('Not found');
+
+  await prisma.collection.delete({ where: { id: collectionId } });
 }
 
 export async function getCollectionStats(): Promise<{ total: number; favorites: number }> {
