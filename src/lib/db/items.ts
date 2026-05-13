@@ -183,6 +183,49 @@ export async function getItemDetailById(itemId: string): Promise<ItemDetail | nu
   };
 }
 
+export type UpdateItemInput = {
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+};
+
+export async function updateItem(
+  itemId: string,
+  data: UpdateItemInput
+): Promise<ItemDetail | null> {
+  const userId = await getDemoUserId();
+  if (!userId) return null;
+
+  const existing = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true },
+  });
+  if (!existing) return null;
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: {
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      tags: {
+        set: [],
+        connectOrCreate: data.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+  });
+
+  return getItemDetailById(itemId);
+}
+
 export async function getItemStats(): Promise<{ total: number; favorites: number }> {
   const userId = await getDemoUserId();
   if (!userId) return { total: 0, favorites: 0 };
