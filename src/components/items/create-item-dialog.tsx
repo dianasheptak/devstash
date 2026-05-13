@@ -22,6 +22,7 @@ import {
 } from '@/lib/validation/item';
 import { CodeEditor } from './code-editor';
 import { MarkdownEditor } from './markdown-editor';
+import { CollectionPicker, type CollectionOption } from './collection-picker';
 import { cn } from '@/lib/utils';
 
 const TYPE_META: Record<CreatableItemType, { icon: LucideIcon; color: string; label: string }> = {
@@ -48,9 +49,17 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
   const [url, setUrl] = useState('');
   const [language, setLanguage] = useState('');
   const [tags, setTags] = useState('');
+  const [collectionIds, setCollectionIds] = useState<string[]>([]);
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
 
   useEffect(() => {
-    if (open) setType(defaultType ?? 'snippet');
+    if (open) {
+      setType(defaultType ?? 'snippet');
+      fetch('/api/collections')
+        .then((r) => r.json())
+        .then((d) => setCollections(d.collections ?? []))
+        .catch(() => {});
+    }
   }, [open, defaultType]);
 
   const reset = () => {
@@ -61,6 +70,7 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
     setUrl('');
     setLanguage('');
     setTags('');
+    setCollectionIds([]);
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -90,6 +100,7 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
           .split(',')
           .map((t) => t.trim())
           .filter((t) => t.length > 0),
+        collectionIds,
       });
 
       if (result.success) {
@@ -226,6 +237,15 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="Comma-separated"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Collections</label>
+            <CollectionPicker
+              collections={collections}
+              selectedIds={collectionIds}
+              onChange={setCollectionIds}
             />
           </div>
 

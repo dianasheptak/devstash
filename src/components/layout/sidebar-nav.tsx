@@ -171,7 +171,7 @@ export function SidebarNav({ collapsed, itemTypes, collections, user }: Props) {
                 {favoriteCollections.map((col) => (
                   <NavItem
                     key={col.id}
-                    href={`/collections/${col.id}`}
+                    href={`/collections/${col.slug}`}
                     icon={<Star className="size-4" />}
                     label={col.name}
                     collapsed={collapsed}
@@ -188,7 +188,7 @@ export function SidebarNav({ collapsed, itemTypes, collections, user }: Props) {
                 {recentCollections.map((col) => (
                   <NavItem
                     key={col.id}
-                    href={`/collections/${col.id}`}
+                    href={`/collections/${col.slug}`}
                     icon={
                       <span
                         className="size-2.5 rounded-full"

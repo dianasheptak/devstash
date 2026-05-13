@@ -29,6 +29,7 @@ import { useItemDrawer } from './item-drawer-context';
 import { updateItem, deleteItem } from '@/actions/items';
 import { CodeEditor } from './code-editor';
 import { MarkdownEditor } from './markdown-editor';
+import { CollectionPicker, type CollectionOption } from './collection-picker';
 import type { ItemDetail } from '@/lib/db/items';
 
 const CODE_TYPES = ['snippet', 'command'] as const;
@@ -338,6 +339,17 @@ function DrawerEdit({
   const [language, setLanguage] = useState(item.language ?? '');
   const [url, setUrl] = useState(item.url ?? '');
   const [tagsCsv, setTagsCsv] = useState(item.tags.join(', '));
+  const [collectionIds, setCollectionIds] = useState<string[]>(
+    item.collections.map((c) => c.id)
+  );
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
+
+  useEffect(() => {
+    fetch('/api/collections')
+      .then((r) => r.json())
+      .then((d) => setCollections(d.collections ?? []))
+      .catch(() => {});
+  }, []);
 
   const typeName = item.itemType.name;
   const showContent = ['snippet', 'prompt', 'command', 'note'].includes(typeName);
@@ -360,6 +372,7 @@ function DrawerEdit({
         language: showLanguage ? language : '',
         url: showUrl ? url : '',
         tags,
+        collectionIds,
       });
 
       if (!result.success) {
@@ -479,6 +492,14 @@ function DrawerEdit({
             value={tagsCsv}
             onChange={(e) => setTagsCsv(e.target.value)}
             placeholder="comma, separated, tags"
+          />
+        </Section>
+
+        <Section label="Collections">
+          <CollectionPicker
+            collections={collections}
+            selectedIds={collectionIds}
+            onChange={setCollectionIds}
           />
         </Section>
       </div>

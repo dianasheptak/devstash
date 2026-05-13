@@ -190,6 +190,7 @@ export type UpdateItemInput = {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds: string[];
 };
 
 export async function updateItem(
@@ -220,6 +221,10 @@ export async function updateItem(
           create: { name },
         })),
       },
+      collections: {
+        deleteMany: {},
+        create: data.collectionIds.map((collectionId) => ({ collectionId })),
+      },
     },
   });
 
@@ -234,6 +239,7 @@ export type CreateItemData = {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds: string[];
 };
 
 export async function createItem(data: CreateItemData): Promise<ItemDetail | null> {
@@ -264,6 +270,9 @@ export async function createItem(data: CreateItemData): Promise<ItemDetail | nul
           create: { name },
         })),
       },
+      collections: data.collectionIds.length > 0
+        ? { create: data.collectionIds.map((collectionId) => ({ collectionId })) }
+        : undefined,
     },
     select: { id: true },
   });

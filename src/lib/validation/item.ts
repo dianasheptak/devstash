@@ -28,6 +28,7 @@ export const updateItemSchema = z.object({
     .array(z.string())
     .default([])
     .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
+  collectionIds: z.array(z.string()).default([]),
 });
 
 export type UpdateItemInput = z.input<typeof updateItemSchema>;
@@ -62,6 +63,7 @@ export const createItemSchema = z
       .array(z.string())
       .default([])
       .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
+    collectionIds: z.array(z.string()).default([]),
   })
   .superRefine((data, ctx) => {
     if (data.type === 'link') {
