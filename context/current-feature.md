@@ -193,3 +193,12 @@ Not Started
 - **Scope:** server actions and utilities only. Components are intentionally not unit-tested
 - Seed tests co-located with source: `src/lib/initials.test.ts` (4 cases on `getInitials`) and `src/lib/constants/item-types.test.ts` (3 cases on `slugToTypeName`). All 6 tests pass
 - Updated `CLAUDE.md` (commands + testing scope) and `context/ai-interaction.md` (workflow step 4 now requires tests when touching `src/lib/**`; new "Testing" section; commit gate requires tests passing)
+
+### 2026-05-13 — Item Drawer
+- Right-side slide-in drawer (shadcn Sheet, capped `max-w-xl`) for item detail; opens on `ItemCard` click across `/dashboard` and `/items/*` — no separate item page
+- `src/components/items/item-drawer-context.tsx` — client React context with `{ openItemId, open, close }`; `ItemDrawerProvider` mounted once in `DashboardLayout`
+- `src/components/items/item-drawer.tsx` — Sheet renders skeleton while fetching, then header (type icon + title + type/language badges), action bar (Copy / Favorite / Pin / Edit / Delete with Delete right-aligned), and sections for Description / Content (TEXT) / URL / File / Tags / Collections. Only Copy is wired (`navigator.clipboard` + sonner toast); other actions are placeholders per spec
+- `ItemCard` promoted to `"use client"` and now calls `useItemDrawer().open(item.id)` on click; added subtle `hover:ring-1`
+- `src/lib/db/items.ts` — new `ItemDetail` type and `getItemDetailById(id)` returning full content + language + file fields + joined collections; scoped to demo user matching the rest of the module
+- `GET /api/items/[id]` (`src/app/api/items/[id]/route.ts`) — `auth()`-gated, returns `{ item }` or 401/404; powers the drawer's fetch-on-click
+- `DashboardLayout` wraps children in `<ItemDrawerProvider>` and mounts `<ItemDrawer />` once so both dashboard and items routes get the drawer for free

@@ -140,6 +140,49 @@ export async function getItemsByType(typeName: string): Promise<ItemWithMeta[]> 
   return items.map(mapItem);
 }
 
+export type ItemDetail = ItemWithMeta & {
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  collections: { id: string; name: string }[];
+};
+
+export async function getItemDetailById(itemId: string): Promise<ItemDetail | null> {
+  const userId = await getDemoUserId();
+  if (!userId) return null;
+
+  const item = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    include: {
+      itemType: { select: { name: true, icon: true, color: true } },
+      tags: { select: { name: true } },
+      collections: {
+        select: { collection: { select: { id: true, name: true } } },
+      },
+    },
+  });
+  if (!item) return null;
+
+  return {
+    id: item.id,
+    title: item.title,
+    contentType: item.contentType,
+    content: item.content,
+    url: item.url,
+    description: item.description,
+    isFavorite: item.isFavorite,
+    isPinned: item.isPinned,
+    language: item.language,
+    createdAt: item.createdAt,
+    itemType: item.itemType,
+    tags: item.tags.map((t) => t.name),
+    fileUrl: item.fileUrl,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
+    collections: item.collections.map((c) => c.collection),
+  };
+}
+
 export async function getItemStats(): Promise<{ total: number; favorites: number }> {
   const userId = await getDemoUserId();
   if (!userId) return { total: 0, favorites: 0 };

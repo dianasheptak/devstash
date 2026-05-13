@@ -1,10 +1,14 @@
+'use client';
+
 import { Star, Pin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ICON_MAP } from '@/lib/constants/item-types';
+import { useItemDrawer } from './item-drawer-context';
 import type { ItemWithMeta } from '@/lib/db/items';
 
 export function ItemCard({ item }: { item: ItemWithMeta }) {
+  const { open } = useItemDrawer();
   const Icon = ICON_MAP[item.itemType.icon];
   const preview =
     item.contentType === 'URL'
@@ -14,7 +18,8 @@ export function ItemCard({ item }: { item: ItemWithMeta }) {
   return (
     <Card
       size="sm"
-      className="hover:ring-foreground/20 transition-shadow cursor-pointer border-l-[3px]"
+      onClick={() => open(item.id)}
+      className="hover:ring-foreground/20 hover:ring-1 transition-shadow cursor-pointer border-l-[3px]"
       style={{ borderLeftColor: item.itemType.color }}
     >
       <CardHeader className="border-b">

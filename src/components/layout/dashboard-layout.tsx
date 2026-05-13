@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SidebarNav } from './sidebar-nav';
+import { ItemDrawerProvider } from '@/components/items/item-drawer-context';
+import { ItemDrawer } from '@/components/items/item-drawer';
 import { cn } from '@/lib/utils';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
@@ -28,6 +30,7 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
+    <ItemDrawerProvider>
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Top bar */}
       <header className="relative flex items-center px-4 h-14 border-b border-border shrink-0">
@@ -112,6 +115,8 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+      <ItemDrawer />
     </div>
+    </ItemDrawerProvider>
   );
 }
