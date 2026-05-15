@@ -1,21 +1,12 @@
-# Current Feature: Auth Pages Nav + Dashboard Logo
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- `/sign-in` and `/register` pages show the `HomepageNav` at the top (same sticky nav used on the marketing homepage)
-- The auth pages' existing centered form layout is preserved — nav sits above it without disrupting the centering
-- Dashboard top bar logo uses the same `⬡` (hexagon) icon + "DevStash" text that the homepage nav uses, matching the style
-
 ## Notes
-
-- `HomepageNav` lives at `src/components/homepage/homepage-nav.tsx` — it is already a client component with scroll/mobile state; reuse it directly on auth pages
-- Auth pages (`src/app/sign-in/page.tsx`, `src/app/register/page.tsx`) currently render a `<main>` with `min-h-screen items-center justify-center`; adding the nav means the page can no longer be `justify-center` at the page level — wrap the form in a centered container inside the page body area
-- Dashboard logo lives in `src/components/layout/dashboard-layout.tsx` around line 67; currently plain "DevStash" text — add the `⬡` span with `text-blue-400` to match the homepage nav style
-- No new components needed — changes are localized to 3 files
 
 ## History
 
@@ -304,6 +295,11 @@ In Progress
 - Scroll fade-in via `IntersectionObserver` on all `.fade-in` elements
 - Primary buttons: blue gradient + glow on hover + shimmer sweep animation; outline buttons: tinted bg + brighter border on hover; large buttons use heavier weight and more padding
 - Responsive: hero stacks vertically, arrow rotates 90°, single-column grids on mobile
+
+### 2026-05-15 — Auth Pages Nav + Dashboard Logo
+- `HomepageNav` added to `/sign-in` and `/register` pages — sticky nav with scroll opacity, desktop links, and mobile hamburger appears above the centered auth form
+- Dashboard top bar logo updated to `⬡` (blue hexagon icon) + "DevStash" text, matching the homepage nav style
+- No new components — changes localized to `sign-in/page.tsx`, `register/page.tsx`, and `dashboard-layout.tsx`
 
 ### 2026-05-13 — Markdown Editor
 - Installed `react-markdown` and `remark-gfm`
