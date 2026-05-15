@@ -51,38 +51,49 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Top bar */}
-      <header className="relative flex items-center px-4 h-14 border-b border-border shrink-0">
-        {/* Left: mobile hamburger + logo */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden size-8"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu className="size-4" />
-          </Button>
-          <Link href={'/'} className="text-lg font-semibold tracking-tight">DevStash</Link>
+      <header className="border-b border-border shrink-0">
+        {/* Main row */}
+        <div className="relative flex items-center px-4 h-14">
+          {/* Left: mobile hamburger + logo */}
+          <div className="flex items-center gap-3 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden size-8"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="size-4" />
+            </Button>
+            <Link href={'/'} className="text-lg font-semibold tracking-tight">DevStash</Link>
+          </div>
+
+          {/* Center: search — desktop only */}
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 w-full max-w-sm px-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input placeholder="Search..." className="pl-9" />
+            </div>
+          </div>
+
+          {/* Right: action buttons */}
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <Button size="sm" variant="outline" onClick={() => openCreateCollection()} className="cursor-pointer">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">New Collection</span>
+            </Button>
+            <Button size="sm" onClick={() => openCreate()} className="cursor-pointer">
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">New Item</span>
+            </Button>
+          </div>
         </div>
 
-        {/* Center: search */}
-        <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-sm px-4">
+        {/* Search row — mobile only */}
+        <div className="lg:hidden px-4 pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input placeholder="Search..." className="pl-9" />
           </div>
-        </div>
-
-        {/* Right: action buttons */}
-        <div className="ml-auto flex items-center gap-2 shrink-0">
-          <Button size="sm" variant="outline" onClick={() => openCreateCollection()} className="cursor-pointer">
-            <Plus className="size-4" />
-            New Collection
-          </Button>
-          <Button size="sm" onClick={() => openCreate()} className="cursor-pointer">
-            <Plus className="size-4" />
-            New Item
-          </Button>
         </div>
       </header>
 
