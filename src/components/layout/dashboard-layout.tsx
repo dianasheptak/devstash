@@ -64,7 +64,10 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
             >
               <Menu className="size-4" />
             </Button>
-            <Link href={'/'} className="text-lg font-semibold tracking-tight">DevStash</Link>
+            <Link href={'/'} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+              <span className="text-xl text-blue-400">⬡</span>
+              <span>DevStash</span>
+            </Link>
           </div>
 
           {/* Center: search — desktop only */}

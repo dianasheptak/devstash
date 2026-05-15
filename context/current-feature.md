@@ -1,4 +1,4 @@
-# Current Feature: Homepage
+# Current Feature: Auth Pages Nav + Dashboard Logo
 
 ## Status
 
@@ -6,24 +6,16 @@ In Progress
 
 ## Goals
 
-- `src/app/page.tsx` redirects authenticated users to `/dashboard`; unauthenticated users see the marketing homepage
-- Navbar: sticky, logo + nav links + Sign In/Get Started buttons; goes opaque on scroll; mobile hamburger menu
-- Hero: gradient headline, subtext, two CTAs, chaos canvas animation (left), arrow, static dashboard preview mockup (right)
-- Features section: 6 cards with Lucide icons, per-type accent glow, Pro badge on Files & Docs
-- AI section: Pro badge, 4-item checklist, static code mockup with syntax highlighting and AI tags
-- Pricing section: Free vs Pro cards, monthly/yearly toggle that updates price ($8/mo ↔ $72/yr), "Most Popular" badge
-- CTA section + footer with 3 link columns and server-rendered copyright year
-- All buttons and links go to correct destinations (`/sign-in`, `/register`, anchor IDs)
-- Fully implemented in Tailwind v4 + shadcn — no custom CSS file
-- Scroll fade-in via `IntersectionObserver` on sections
+- `/sign-in` and `/register` pages show the `HomepageNav` at the top (same sticky nav used on the marketing homepage)
+- The auth pages' existing centered form layout is preserved — nav sits above it without disrupting the centering
+- Dashboard top bar logo uses the same `⬡` (hexagon) icon + "DevStash" text that the homepage nav uses, matching the style
 
 ## Notes
 
-- Components live in `src/components/homepage/`
-- Server components: `homepage-nav.tsx`, `hero-section.tsx`, `features-section.tsx`, `ai-section.tsx`, `pricing-section.tsx`, `cta-section.tsx`, `homepage-footer.tsx`
-- Client islands: `chaos-canvas.tsx`, `mobile-nav.tsx`, `pricing-toggle.tsx`, `scroll-fade.tsx`, `navbar-scroll.tsx`
-- No layout wrapping — homepage owns its own nav/footer
-- Spec: `context/features/homepage-spec.md`
+- `HomepageNav` lives at `src/components/homepage/homepage-nav.tsx` — it is already a client component with scroll/mobile state; reuse it directly on auth pages
+- Auth pages (`src/app/sign-in/page.tsx`, `src/app/register/page.tsx`) currently render a `<main>` with `min-h-screen items-center justify-center`; adding the nav means the page can no longer be `justify-center` at the page level — wrap the form in a centered container inside the page body area
+- Dashboard logo lives in `src/components/layout/dashboard-layout.tsx` around line 67; currently plain "DevStash" text — add the `⬡` span with `text-blue-400` to match the homepage nav style
+- No new components needed — changes are localized to 3 files
 
 ## History
 
