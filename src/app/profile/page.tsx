@@ -6,6 +6,11 @@ import { ICON_MAP } from "@/lib/constants/item-types";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ProfileActions } from "@/components/profile/profile-actions";
+import { UpgradeCard } from "@/components/billing/upgrade-card";
+import { ManageSubscriptionCard } from "@/components/billing/manage-subscription-card";
+import { CheckoutToast } from "@/components/profile/checkout-toast";
+import { intervalForPriceId } from "@/lib/stripe";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -125,10 +130,34 @@ export default async function ProfilePage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Subscription
+        </h2>
+        {user.isPro ? (
+          <ManageSubscriptionCard
+            status={user.subscriptionStatus}
+            interval={
+              user.subscriptionPriceId
+                ? intervalForPriceId(user.subscriptionPriceId)
+                : null
+            }
+            periodEnd={user.subscriptionPeriodEnd}
+            cancelAt={user.subscriptionCancelAt}
+          />
+        ) : (
+          <UpgradeCard />
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           Account
         </h2>
         <ProfileActions hasPassword={user.hasPassword} email={user.email} />
       </section>
+
+      <Suspense fallback={null}>
+        <CheckoutToast />
+      </Suspense>
     </main>
   );
 }

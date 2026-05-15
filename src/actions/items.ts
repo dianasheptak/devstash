@@ -13,6 +13,7 @@ import {
   createItemSchema,
   type CreateItemInput,
 } from '@/lib/validation/item';
+import { canCreateItem, isProType } from '@/lib/billing/limits';
 
 export type ActionResult<T> =
   | { success: true; data: T }
@@ -30,6 +31,18 @@ export async function createItem(
   if (!parsed.success) {
     const first = parsed.error.issues[0];
     return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const limit = await canCreateItem(session.user.id);
+  if (!limit.allowed) {
+    return { success: false, error: limit.reason };
+  }
+
+  if (isProType(parsed.data.type) && !session.user.isPro) {
+    return {
+      success: false,
+      error: 'File and image items require a Pro plan.',
+    };
   }
 
   try {

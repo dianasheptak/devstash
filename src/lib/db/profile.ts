@@ -18,6 +18,11 @@ export type ProfileData = {
     image: string | null;
     createdAt: Date;
     hasPassword: boolean;
+    isPro: boolean;
+    subscriptionStatus: string | null;
+    subscriptionPriceId: string | null;
+    subscriptionPeriodEnd: Date | null;
+    subscriptionCancelAt: Date | null;
   };
   totals: {
     items: number;
@@ -36,6 +41,11 @@ export async function getProfileData(userId: string): Promise<ProfileData | null
       image: true,
       password: true,
       createdAt: true,
+      isPro: true,
+      subscriptionStatus: true,
+      subscriptionPriceId: true,
+      subscriptionPeriodEnd: true,
+      subscriptionCancelAt: true,
     },
   });
   if (!user) return null;
@@ -68,6 +78,11 @@ export async function getProfileData(userId: string): Promise<ProfileData | null
       image: user.image,
       createdAt: user.createdAt,
       hasPassword: user.password !== null,
+      isPro: user.isPro,
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionPriceId: user.subscriptionPriceId,
+      subscriptionPeriodEnd: user.subscriptionPeriodEnd,
+      subscriptionCancelAt: user.subscriptionCancelAt,
     },
     totals: { items, collections },
     breakdown,

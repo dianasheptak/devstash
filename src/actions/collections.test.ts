@@ -11,6 +11,10 @@ vi.mock('@/lib/db/collections', () => ({
   deleteCollection: vi.fn(),
 }));
 
+vi.mock('@/lib/billing/limits', () => ({
+  canCreateCollection: vi.fn().mockResolvedValue({ allowed: true }),
+}));
+
 import { auth } from '@/auth';
 import {
   createCollection as createCollectionQuery,
