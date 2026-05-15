@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
 import { ICON_MAP, slugToTypeName } from '@/lib/constants/item-types';
 import { getItemsByType } from '@/lib/db/items';
 import { prisma } from '@/lib/prisma';
@@ -27,8 +28,11 @@ export default async function ItemsByTypePage({
   const typeName = slugToTypeName(slug);
   if (!typeName) notFound();
 
+  const session = await auth();
+  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/dashboard');
+
   const [items, itemType] = await Promise.all([
-    getItemsByType(typeName),
+    getItemsByType(session.user.id, typeName),
     prisma.itemType.findFirst({
       where: { name: typeName, isSystem: true },
       select: { icon: true, color: true },

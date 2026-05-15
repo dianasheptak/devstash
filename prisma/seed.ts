@@ -53,7 +53,7 @@ async function main() {
       email: "demo@devstash.io",
       name: "Demo User",
       password: hashedPassword,
-      isPro: false,
+      isPro: true,
       emailVerified: new Date(),
     },
   });

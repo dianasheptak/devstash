@@ -12,10 +12,10 @@ export default async function CollectionsRootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session?.user) redirect('/sign-in?callbackUrl=/collections');
+  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/collections');
 
   const [itemTypes, collections] = await Promise.all([
-    getSystemItemTypes(),
+    getSystemItemTypes(session.user.id),
     getSidebarCollections(),
   ]);
 

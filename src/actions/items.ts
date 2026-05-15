@@ -33,7 +33,7 @@ export async function createItem(
   }
 
   try {
-    const created = await createItemQuery(parsed.data);
+    const created = await createItemQuery(session.user.id, parsed.data);
     if (!created) {
       return { success: false, error: 'Failed to create item' };
     }
@@ -63,7 +63,7 @@ export async function updateItem(
   }
 
   try {
-    const updated = await updateItemQuery(itemId, parsed.data);
+    const updated = await updateItemQuery(session.user.id, itemId, parsed.data);
     if (!updated) {
       return { success: false, error: 'Item not found' };
     }
@@ -86,7 +86,7 @@ export async function deleteItem(
   }
 
   try {
-    const deleted = await deleteItemQuery(itemId);
+    const deleted = await deleteItemQuery(session.user.id, itemId);
     if (!deleted) {
       return { success: false, error: 'Item not found' };
     }
