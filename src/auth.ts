@@ -66,7 +66,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const u = await prisma.user.findUnique({
         where: { id: token.id },
-        select: { passwordChangedAt: true },
+        select: { passwordChangedAt: true, isPro: true },
       });
 
       // Invalidate the session if the user was deleted, the token predates this
@@ -81,6 +81,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       session.user.id = token.id;
+      session.user.isPro = u.isPro;
       return session;
     },
   },

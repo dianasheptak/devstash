@@ -10,21 +10,17 @@ export type SidebarItemType = {
 
 const ITEM_TYPE_ORDER = ['snippet', 'prompt', 'command', 'note', 'file', 'image', 'link'];
 
-export async function getSystemItemTypes(): Promise<SidebarItemType[]> {
-  const userId = await getDemoUserId();
-
+export async function getSystemItemTypes(userId: string): Promise<SidebarItemType[]> {
   const [types, counts] = await Promise.all([
     prisma.itemType.findMany({
       where: { isSystem: true },
       select: { id: true, name: true, icon: true, color: true },
     }),
-    userId
-      ? prisma.item.groupBy({
-          by: ['itemTypeId'],
-          where: { userId },
-          _count: { id: true },
-        })
-      : Promise.resolve([]),
+    prisma.item.groupBy({
+      by: ['itemTypeId'],
+      where: { userId },
+      _count: { id: true },
+    }),
   ]);
 
   const countMap = Object.fromEntries(
@@ -50,15 +46,6 @@ export type ItemWithMeta = {
   itemType: { name: string; icon: string; color: string };
   tags: string[];
 };
-
-// TODO: replace hardcoded email with session user after auth is set up
-async function getDemoUserId(): Promise<string | null> {
-  const user = await prisma.user.findUnique({
-    where: { email: 'demo@devstash.io' },
-    select: { id: true },
-  });
-  return user?.id ?? null;
-}
 
 function mapItem(item: {
   id: string;
@@ -95,10 +82,7 @@ const itemInclude = {
   tags: { select: { name: true } },
 } as const;
 
-export async function getPinnedItems(limit = 20): Promise<ItemWithMeta[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
-
+export async function getPinnedItems(userId: string, limit = 20): Promise<ItemWithMeta[]> {
   const safeLimit = Math.min(Math.max(1, limit), 50);
 
   const items = await prisma.item.findMany({
@@ -111,10 +95,7 @@ export async function getPinnedItems(limit = 20): Promise<ItemWithMeta[]> {
   return items.map(mapItem);
 }
 
-export async function getRecentItems(limit = 10): Promise<ItemWithMeta[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
-
+export async function getRecentItems(userId: string, limit = 10): Promise<ItemWithMeta[]> {
   const safeLimit = Math.min(Math.max(1, limit), 50);
 
   const items = await prisma.item.findMany({
@@ -127,10 +108,7 @@ export async function getRecentItems(limit = 10): Promise<ItemWithMeta[]> {
   return items.map(mapItem);
 }
 
-export async function getItemsByType(typeName: string): Promise<ItemWithMeta[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
-
+export async function getItemsByType(userId: string, typeName: string): Promise<ItemWithMeta[]> {
   const items = await prisma.item.findMany({
     where: { userId, itemType: { name: typeName, isSystem: true } },
     orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
@@ -147,10 +125,7 @@ export type ItemDetail = ItemWithMeta & {
   collections: { id: string; name: string }[];
 };
 
-export async function getItemDetailById(itemId: string): Promise<ItemDetail | null> {
-  const userId = await getDemoUserId();
-  if (!userId) return null;
-
+export async function getItemDetailById(userId: string, itemId: string): Promise<ItemDetail | null> {
   const item = await prisma.item.findFirst({
     where: { id: itemId, userId },
     include: {
@@ -194,12 +169,10 @@ export type UpdateItemInput = {
 };
 
 export async function updateItem(
+  userId: string,
   itemId: string,
   data: UpdateItemInput
 ): Promise<ItemDetail | null> {
-  const userId = await getDemoUserId();
-  if (!userId) return null;
-
   const existing = await prisma.item.findFirst({
     where: { id: itemId, userId },
     select: { id: true },
@@ -228,7 +201,7 @@ export async function updateItem(
     },
   });
 
-  return getItemDetailById(itemId);
+  return getItemDetailById(userId, itemId);
 }
 
 export type CreateItemData = {
@@ -242,10 +215,7 @@ export type CreateItemData = {
   collectionIds: string[];
 };
 
-export async function createItem(data: CreateItemData): Promise<ItemDetail | null> {
-  const userId = await getDemoUserId();
-  if (!userId) return null;
-
+export async function createItem(userId: string, data: CreateItemData): Promise<ItemDetail | null> {
   const itemType = await prisma.itemType.findFirst({
     where: { name: data.type, isSystem: true },
     select: { id: true },
@@ -277,13 +247,10 @@ export async function createItem(data: CreateItemData): Promise<ItemDetail | nul
     select: { id: true },
   });
 
-  return getItemDetailById(created.id);
+  return getItemDetailById(userId, created.id);
 }
 
-export async function deleteItem(itemId: string): Promise<boolean> {
-  const userId = await getDemoUserId();
-  if (!userId) return false;
-
+export async function deleteItem(userId: string, itemId: string): Promise<boolean> {
   const existing = await prisma.item.findFirst({
     where: { id: itemId, userId },
     select: { id: true },
@@ -294,10 +261,7 @@ export async function deleteItem(itemId: string): Promise<boolean> {
   return true;
 }
 
-export async function getItemStats(): Promise<{ total: number; favorites: number }> {
-  const userId = await getDemoUserId();
-  if (!userId) return { total: 0, favorites: 0 };
-
+export async function getItemStats(userId: string): Promise<{ total: number; favorites: number }> {
   const [total, favorites] = await Promise.all([
     prisma.item.count({ where: { userId } }),
     prisma.item.count({ where: { userId, isFavorite: true } }),

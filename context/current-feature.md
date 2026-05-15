@@ -308,3 +308,15 @@ Not Started
 - `item-drawer.tsx` — display mode: replaced `<pre>` with `<MarkdownEditor readOnly>` for prompt/note content; edit mode: replaced `<Textarea>` with `<MarkdownEditor>` for prompt/note content; snippet/command continue to use `<CodeEditor>` unchanged
 - `create-item-dialog.tsx` — replaced `<Textarea>` with `<MarkdownEditor>` for prompt/note content field; snippet/command continue to use `<CodeEditor>`
 - All 32 Vitest tests pass; `npm run build` green
+
+### 2026-05-15 — Stripe Phase 1: Core Infrastructure
+- Schema: added `subscriptionStatus`, `subscriptionPriceId`, `subscriptionCancelAt`, `subscriptionPeriodEnd` to `User`; migration `20260515130308_add_subscription_fields` applied to Neon `development`
+- Installed `stripe@22.1.1`; new `src/lib/stripe.ts` — `server-only` Stripe client pinned to `apiVersion: "2026-04-22.dahlia"`, plus `priceIdFor(interval)` and `intervalForPriceId(priceId)` helpers reading `STRIPE_PRICE_ID_MONTHLY` / `STRIPE_PRICE_ID_YEARLY` (lazy — never invoked at module load)
+- New `src/lib/billing/limits.ts` (server-only): `FREE_LIMITS = { items: 50, collections: 3 }`, `canCreateItem(userId)`, `canCreateCollection(userId)`, `isProType(type)`; Pro users short-circuit before the count query
+- `src/lib/billing/limits.test.ts` — 8 Vitest cases mocking `@/lib/prisma` at the import boundary: Pro allowed, free under/at limit for both items and collections, `isProType` true for file/image and false otherwise
+- `src/auth.ts` — `isPro` folded into the existing session-callback `findUnique` (no new round-trip); assigned to `session.user.isPro`
+- `src/types/next-auth.d.ts` — `Session.user.isPro: boolean` augmentation
+- **Items DB refactor:** `src/lib/db/items.ts` no longer calls `getDemoUserId()`; every query takes a `userId: string` param. Call sites updated to pass `session.user.id`: `src/actions/items.ts`, `src/app/dashboard/page.tsx` (added `auth()` gate), `src/app/items/[type]/page.tsx` (added `auth()` gate), `src/app/api/items/[id]/route.ts`, plus the three layouts (`dashboard`, `items`, `collections`). `src/actions/items.test.ts` updated for the new 2-arg `deleteItem(userId, id)` mock signature
+- `prisma/seed.ts` — demo user now seeded with `isPro: true`; re-seeded against `development` branch
+- 58 Vitest tests pass (8 new); `npm run build` green
+- **Known gap (deferred):** `src/lib/db/collections.ts` still uses its own internal `getDemoUserId()` for read queries (`getRecentCollections`, `getSidebarCollections`, `getAllCollections`, `getCollectionsForPicker`, `getCollectionBySlug`, `getCollectionStats`). Phase 1 spec explicitly scoped the refactor to items only, but the dashboard will currently mix the signed-in user's items with the demo user's collections — worth a parallel cleanup pass before Phase 2 enforcement

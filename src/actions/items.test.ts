@@ -52,7 +52,7 @@ describe('deleteItem action', () => {
     mockDeleteQuery.mockResolvedValue(true);
     const result = await deleteItem('item-1');
     expect(result).toEqual({ success: true, data: { id: 'item-1' } });
-    expect(mockDeleteQuery).toHaveBeenCalledWith('item-1');
+    expect(mockDeleteQuery).toHaveBeenCalledWith('u1', 'item-1');
   });
 
   it('returns Failed to delete on query exception', async () => {

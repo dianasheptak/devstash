@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
+import { redirect } from 'next/navigation';
 import { Star, LayoutGrid, FolderOpen } from 'lucide-react';
+import { auth } from '@/auth';
 import { getRecentCollections, getCollectionStats } from '@/lib/db/collections';
 import { getPinnedItems, getRecentItems, getItemStats } from '@/lib/db/items';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,13 +11,17 @@ import { ItemCard } from '@/components/items/item-card';
 import { CollectionCard } from '@/components/collections/collection-card';
 
 export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/dashboard');
+  const userId = session.user.id;
+
   const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
     await Promise.all([
       getRecentCollections(),
       getCollectionStats(),
-      getPinnedItems(),
-      getRecentItems(),
-      getItemStats(),
+      getPinnedItems(userId),
+      getRecentItems(userId),
+      getItemStats(userId),
     ]);
 
   const stats = [
