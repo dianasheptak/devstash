@@ -14,6 +14,7 @@ import {
   type UpdateCollectionInput,
 } from '@/lib/validation/collection';
 import type { ActionResult } from '@/actions/items';
+import { canCreateCollection } from '@/lib/billing/limits';
 
 export async function createCollection(
   input: CreateCollectionInput
@@ -27,6 +28,11 @@ export async function createCollection(
   if (!parsed.success) {
     const first = parsed.error.issues[0];
     return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const limit = await canCreateCollection(session.user.id);
+  if (!limit.allowed) {
+    return { success: false, error: limit.reason };
   }
 
   try {

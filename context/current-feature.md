@@ -1,12 +1,66 @@
-# Current Feature
+# Current Feature: Stripe Phase 2 — Integration & UI
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Stripe webhook keeps `User.isPro` + subscription metadata in sync
+- `createItem` and `createCollection` actions enforce Free-tier limits and the Pro-only `file`/`image` types
+- Users can upgrade via Stripe Checkout (monthly $8 / yearly $72) and manage their subscription via Stripe Customer Portal
+- Profile page renders an Upgrade card (Free) or Manage Subscription card (Pro)
+
 ## Notes
+
+**Depends on:** Phase 1 (schema, `src/lib/stripe.ts`, `src/lib/billing/limits.ts`, session `isPro`, items DB refactored off the demo user).
+
+### Files to Create
+1. `src/lib/billing/subscription.ts` — `syncSubscriptionFromStripe(sub)` + `clearSubscription(customerId)`. `active`/`trialing` → `isPro: true`.
+2. `src/lib/billing/subscription.test.ts` — active / canceled / unknown-customer cases (mock Prisma + Stripe at import boundary).
+3. `src/app/api/stripe/checkout/route.ts` — `auth()`-gated POST; creates `Stripe.Customer` if missing (persist BEFORE checkout); creates `checkout.sessions` in `mode: "subscription"` with success/cancel URLs to `/profile`, `allow_promotion_codes`, `client_reference_id`, `subscription_data.metadata.userId`. 400 for already-Pro.
+4. `src/app/api/stripe/portal/route.ts` — `auth()`-gated POST; `billingPortal.sessions` for `stripeCustomerId`. 400 if none.
+5. `src/app/api/stripe/webhook/route.ts` — `runtime = "nodejs"`; verify signature against **raw** body (`await req.text()`); dispatch: `checkout.session.completed`, `customer.subscription.created/updated/trial_will_end` → sync; `customer.subscription.deleted` → clear; `invoice.payment_failed` → log; default → 200.
+6. `src/components/billing/upgrade-card.tsx` — Monthly/Yearly toggle, "Upgrade to Pro" → POST checkout → redirect.
+7. `src/components/billing/manage-subscription-card.tsx` — plan + status + renews/cancels date; "Manage billing" → POST portal.
+8. `src/components/profile/checkout-toast.tsx` — reads `?checkout=success|cancel`, dedupe by `id: "checkout"`.
+
+### Files to Modify
+- `src/actions/items.ts` — in `createItem`, add `canCreateItem` check + `isProType` gate after `safeParse`.
+- `src/actions/collections.ts` — same with `canCreateCollection`.
+- `src/lib/db/profile.ts` — extend `ProfileData.user` with `isPro`, `subscriptionStatus`, `subscriptionPriceId`, `subscriptionPeriodEnd`, `subscriptionCancelAt` (add to existing `select`).
+- `src/app/profile/page.tsx` — Subscription section between Usage and Account; renders Manage or Upgrade card; mount `<CheckoutToast />`.
+- `.env.example` — inline comments for each Stripe var + `stripe listen` command for webhook secret.
+
+### Env Vars
+```
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_ID_MONTHLY=
+STRIPE_PRICE_ID_YEARLY=
+APP_URL=http://localhost:3000
+```
+
+### Stripe Dashboard Setup (user-side)
+1. Product `DevStash Pro` with two recurring prices ($8/mo, $72/yr)
+2. Customer portal — enable cancellation, plan switching, payment-method updates
+3. Webhook (local via `stripe listen --forward-to localhost:3000/api/stripe/webhook`; hosted endpoint subscribed to the 6 events)
+4. `sk_test_…` → `STRIPE_SECRET_KEY`
+
+### Key Gotchas
+- **Raw body** for webhooks — `req.text()`, not `req.json()`
+- `runtime = "nodejs"` on webhook route
+- Persist `stripeCustomerId` BEFORE opening Checkout
+- No `useSession().update()` — session callback re-reads `isPro` per request; hard nav to `/profile` is enough
+- Handlers idempotent (overwrite same User row); return 200 on unhandled events
+- Pro sidebar badge already exists at `src/components/layout/sidebar-nav.tsx:60` — leave it
+
+### Out of Scope
+- File uploads (R2), AI features, export gating
+- Proration UX beyond Customer Portal defaults
+- `StripeEvent` dedupe table
+- Rate limiting on checkout/portal routes
 
 ## History
 

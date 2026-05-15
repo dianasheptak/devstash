@@ -10,6 +10,11 @@ vi.mock('@/lib/db/items', () => ({
   createItem: vi.fn(),
 }));
 
+vi.mock('@/lib/billing/limits', () => ({
+  canCreateItem: vi.fn().mockResolvedValue({ allowed: true }),
+  isProType: vi.fn().mockReturnValue(false),
+}));
+
 import { deleteItem, createItem } from './items';
 import { auth } from '@/auth';
 import {

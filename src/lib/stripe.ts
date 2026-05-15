@@ -1,14 +1,25 @@
 import "server-only";
 import Stripe from "stripe";
 
-const secretKey = process.env.STRIPE_SECRET_KEY;
-if (!secretKey) {
-  throw new Error("STRIPE_SECRET_KEY is not set");
+let _stripe: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (_stripe) return _stripe;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+  _stripe = new Stripe(secretKey, {
+    apiVersion: "2026-04-22.dahlia",
+    typescript: true,
+  });
+  return _stripe;
 }
 
-export const stripe = new Stripe(secretKey, {
-  apiVersion: "2026-04-22.dahlia",
-  typescript: true,
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return Reflect.get(getStripe(), prop, getStripe());
+  },
 });
 
 export type BillingInterval = "monthly" | "yearly";
