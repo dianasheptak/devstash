@@ -1,12 +1,29 @@
-# Current Feature
+# Current Feature: Homepage
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- `src/app/page.tsx` redirects authenticated users to `/dashboard`; unauthenticated users see the marketing homepage
+- Navbar: sticky, logo + nav links + Sign In/Get Started buttons; goes opaque on scroll; mobile hamburger menu
+- Hero: gradient headline, subtext, two CTAs, chaos canvas animation (left), arrow, static dashboard preview mockup (right)
+- Features section: 6 cards with Lucide icons, per-type accent glow, Pro badge on Files & Docs
+- AI section: Pro badge, 4-item checklist, static code mockup with syntax highlighting and AI tags
+- Pricing section: Free vs Pro cards, monthly/yearly toggle that updates price ($8/mo ↔ $72/yr), "Most Popular" badge
+- CTA section + footer with 3 link columns and server-rendered copyright year
+- All buttons and links go to correct destinations (`/sign-in`, `/register`, anchor IDs)
+- Fully implemented in Tailwind v4 + shadcn — no custom CSS file
+- Scroll fade-in via `IntersectionObserver` on sections
+
 ## Notes
+
+- Components live in `src/components/homepage/`
+- Server components: `homepage-nav.tsx`, `hero-section.tsx`, `features-section.tsx`, `ai-section.tsx`, `pricing-section.tsx`, `cta-section.tsx`, `homepage-footer.tsx`
+- Client islands: `chaos-canvas.tsx`, `mobile-nav.tsx`, `pricing-toggle.tsx`, `scroll-fade.tsx`, `navbar-scroll.tsx`
+- No layout wrapping — homepage owns its own nav/footer
+- Spec: `context/features/homepage-spec.md`
 
 ## History
 

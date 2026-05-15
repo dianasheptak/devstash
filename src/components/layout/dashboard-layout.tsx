@@ -11,6 +11,7 @@ import { ItemDrawer } from '@/components/items/item-drawer';
 import { CreateItemProvider, useCreateItem } from '@/components/items/create-item-context';
 import { CreateCollectionProvider, useCreateCollection } from '@/components/collections/create-collection-context';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
 
@@ -61,7 +62,7 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
           >
             <Menu className="size-4" />
           </Button>
-          <span className="text-lg font-semibold tracking-tight">DevStash</span>
+          <Link href={'/'} className="text-lg font-semibold tracking-tight">DevStash</Link>
         </div>
 
         {/* Center: search */}

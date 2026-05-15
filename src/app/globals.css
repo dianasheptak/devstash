@@ -125,6 +125,24 @@
     }
 }
 
+/* Scroll fade-in */
+.fade-in {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Navbar scroll state */
+.navbar-scrolled {
+  background-color: oklch(0.145 0 0 / 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid oklch(1 0 0 / 10%);
+}
+
 .markdown-preview {
   color: #d4d4d4;
 }
