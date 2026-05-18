@@ -1,12 +1,23 @@
-# Current Feature
+# Current Feature: Pagination
 
 ## Status
 
-Not Started
+Completed
 
 ## Goals
 
+- Add pagination to `/items/[type]` and `/collections/[slug]` pages
+- Pagination controls at bottom with numbered page links + prev/next
+- Disable (grey out) prev/next when at boundaries
+- Use constants: `ITEMS_PER_PAGE = 21`, `COLLECTIONS_PER_PAGE = 21`
+- Dashboard limits: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
+- Fetch only the page slice from the DB — never load all rows and slice in memory
+
 ## Notes
+
+Spec: `context/features/pagination-spec.md`. Pagination applies to listing pages only; the dashboard keeps its existing capped queries (just route them through the new constants).
+
+
 
 ## History
 

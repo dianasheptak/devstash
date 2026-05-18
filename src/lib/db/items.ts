@@ -115,14 +115,33 @@ export async function getRecentItems(userId: string, limit = 10): Promise<ItemWi
   return items.map(mapItem);
 }
 
-export async function getItemsByType(userId: string, typeName: string): Promise<ItemWithMeta[]> {
+export type PaginatedItems = {
+  items: ItemWithMeta[];
+  total: number;
+  pageCount: number;
+  page: number;
+};
+
+export async function getItemsByType(
+  userId: string,
+  typeName: string,
+  { page, perPage }: { page: number; perPage: number }
+): Promise<PaginatedItems> {
+  const where = { userId, itemType: { name: typeName, isSystem: true } };
+
+  const total = await prisma.item.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+
   const items = await prisma.item.findMany({
-    where: { userId, itemType: { name: typeName, isSystem: true } },
+    where,
     orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     include: itemInclude,
+    skip: (safePage - 1) * perPage,
+    take: perPage,
   });
 
-  return items.map(mapItem);
+  return { items: items.map(mapItem), total, pageCount, page: safePage };
 }
 
 export type ItemDetail = ItemWithMeta & {

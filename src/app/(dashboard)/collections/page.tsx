@@ -4,12 +4,25 @@ import { redirect } from 'next/navigation';
 import { FolderOpen } from 'lucide-react';
 import { auth } from '@/auth';
 import { getAllCollections } from '@/lib/db/collections';
+import { COLLECTIONS_PER_PAGE, parsePageParam } from '@/lib/constants/pagination';
 import { CollectionCard } from '@/components/collections/collection-card';
+import { Pagination } from '@/components/shared/pagination';
 
-export default async function CollectionsPage() {
+export default async function CollectionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string | string[] }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect('/sign-in?callbackUrl=/collections');
-  const collections = await getAllCollections(session.user.id);
+
+  const { page: pageParam } = await searchParams;
+  const page = parsePageParam(pageParam);
+
+  const { collections, total, pageCount, page: currentPage } = await getAllCollections(
+    session.user.id,
+    { page, perPage: COLLECTIONS_PER_PAGE }
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -17,7 +30,7 @@ export default async function CollectionsPage() {
         <FolderOpen className="size-6 text-muted-foreground" />
         <h1 className="text-2xl font-bold tracking-tight">Collections</h1>
         <span className="text-sm text-muted-foreground">
-          {collections.length} {collections.length === 1 ? 'collection' : 'collections'}
+          {total} {total === 1 ? 'collection' : 'collections'}
         </span>
       </header>
 
@@ -32,6 +45,8 @@ export default async function CollectionsPage() {
           ))}
         </div>
       )}
+
+      <Pagination basePath="/collections" page={currentPage} pageCount={pageCount} />
     </div>
   );
 }
