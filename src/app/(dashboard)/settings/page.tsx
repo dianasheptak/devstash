@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfileActions } from "@/components/profile/profile-actions";
+import { EditorPreferencesForm } from "@/components/settings/editor-preferences-form";
+import { parseEditorPreferences } from "@/lib/validation/editor-preferences";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +17,11 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { email: true, password: true },
+    select: { email: true, password: true, editorPreferences: true },
   });
   if (!user) redirect("/sign-in?callbackUrl=/settings");
+
+  const editorPrefs = parseEditorPreferences(user.editorPreferences);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12 space-y-8">
@@ -27,6 +31,13 @@ export default async function SettingsPage() {
           Manage your account.
         </p>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Editor Preferences
+        </h2>
+        <EditorPreferencesForm initial={editorPrefs} />
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

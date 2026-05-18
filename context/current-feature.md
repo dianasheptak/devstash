@@ -9,7 +9,6 @@ Not Started
 ## Notes
 
 
-
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
@@ -398,6 +397,19 @@ Not Started
 - `src/components/layout/user-menu.tsx` — added "Settings" `Link` (lucide `Settings` icon) between Profile and Sign out in the upward dropdown popover
 - `src/app/profile/page.tsx` — removed the Account section and the `ProfileActions` import; existing `ChangePasswordDialog` + `DeleteAccountDialog` are now reached through `/settings` only
 - 87 Vitest tests pass; `npm run build` green
+
+### 2026-05-18 — Editor Preferences Settings
+- Schema: added `editorPreferences Json?` to `User`; migration `20260518194243_add_editor_preferences` applied to Neon `development`
+- `src/lib/validation/editor-preferences.ts` — Zod schema, `EDITOR_FONT_SIZES` (10–20), `EDITOR_TAB_SIZES` (2/4/8), `EDITOR_THEMES` (`vs-dark` | `monokai` | `github-dark`), `DEFAULT_EDITOR_PREFERENCES` (12px, 2-space, wrap on, minimap off, vs-dark), and `parseEditorPreferences()` that merges partial/invalid stored values with defaults (fail-safe for legacy/malformed JSON)
+- `src/actions/editor-preferences.ts` — `updateEditorPreferences` server action: `auth()` gate, `safeParse`, `prisma.user.update`, returns `ActionResult<EditorPreferences>`
+- `src/components/items/editor-preferences-context.tsx` — `EditorPreferencesProvider` + `useEditorPreferences()` hook holding `{ prefs, setPrefs }` so the CodeEditor and the settings form share live state
+- `src/app/(dashboard)/layout.tsx` — loads `editorPreferences` in the existing `Promise.all`, runs `parseEditorPreferences`, and seeds the provider for every dashboard route
+- `src/components/layout/dashboard-layout.tsx` — wraps the tree in `EditorPreferencesProvider`; accepts an `editorPrefs` prop
+- `src/components/items/code-editor.tsx` — reads prefs from context; registers two custom Monaco themes (`monokai`, `github-dark`) once via `loader.init()`; wires `fontSize`, `tabSize`, `wordWrap`, `minimap`, `theme`
+- `src/components/settings/editor-preferences-form.tsx` — auto-save form (no save button), `useTransition` + sonner toast dedup'd by `id: "editor-prefs"`; native `<select>` made `appearance-none` with a custom `ChevronDown` inset from the right edge
+- `src/app/(dashboard)/settings/page.tsx` — new "Editor Preferences" section above the Account section; loads prefs server-side via `parseEditorPreferences` and seeds the form
+- Tests: 4 schema cases + 4 `parseEditorPreferences` cases in `editor-preferences.test.ts`; 4 server-action cases in `actions/editor-preferences.test.ts` (unauthed, invalid input, success, db exception)
+- 99 Vitest tests pass (12 new); `npm run build` green
 
 ### 2026-05-18 — Global Search / Command Palette
 - Installed shadcn `command` component (cmdk-based) + `input-group`; existing `dialog.tsx` left in place

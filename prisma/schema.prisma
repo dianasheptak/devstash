@@ -25,6 +25,7 @@ model User {
   subscriptionCancelAt  DateTime?
   subscriptionPeriodEnd DateTime?
   passwordChangedAt     DateTime  @default(now())
+  editorPreferences     Json?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
