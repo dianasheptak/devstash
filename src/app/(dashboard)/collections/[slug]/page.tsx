@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/auth';
 import { getCollectionBySlug } from '@/lib/db/collections';
 import { ItemCard } from '@/components/items/item-card';
 import { CollectionActions } from '@/components/collections/collection-actions';
@@ -10,8 +11,10 @@ export default async function CollectionPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const session = await auth();
+  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/collections');
   const { slug } = await params;
-  const collection = await getCollectionBySlug(slug);
+  const collection = await getCollectionBySlug(session.user.id, slug);
   if (!collection) notFound();
 
   return (

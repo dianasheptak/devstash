@@ -296,11 +296,6 @@ Not Started
 - Primary buttons: blue gradient + glow on hover + shimmer sweep animation; outline buttons: tinted bg + brighter border on hover; large buttons use heavier weight and more padding
 - Responsive: hero stacks vertically, arrow rotates 90°, single-column grids on mobile
 
-### 2026-05-15 — Auth Pages Nav + Dashboard Logo
-- `HomepageNav` added to `/sign-in` and `/register` pages — sticky nav with scroll opacity, desktop links, and mobile hamburger appears above the centered auth form
-- Dashboard top bar logo updated to `⬡` (blue hexagon icon) + "DevStash" text, matching the homepage nav style
-- No new components — changes localized to `sign-in/page.tsx`, `register/page.tsx`, and `dashboard-layout.tsx`
-
 ### 2026-05-13 — Markdown Editor
 - Installed `react-markdown` and `remark-gfm`
 - Created `src/components/items/markdown-editor.tsx` — client component with Write/Preview tabs, macOS window dots + copy button in `bg-[#2d2d2d]` header (matching `CodeEditor` style), auto-growing textarea (min 80px, max 400px), GFM rendering via `react-markdown` + `remark-gfm`; readonly mode shows Preview tab only
@@ -308,6 +303,11 @@ Not Started
 - `item-drawer.tsx` — display mode: replaced `<pre>` with `<MarkdownEditor readOnly>` for prompt/note content; edit mode: replaced `<Textarea>` with `<MarkdownEditor>` for prompt/note content; snippet/command continue to use `<CodeEditor>` unchanged
 - `create-item-dialog.tsx` — replaced `<Textarea>` with `<MarkdownEditor>` for prompt/note content field; snippet/command continue to use `<CodeEditor>`
 - All 32 Vitest tests pass; `npm run build` green
+
+### 2026-05-15 — Auth Pages Nav + Dashboard Logo
+- `HomepageNav` added to `/sign-in` and `/register` pages — sticky nav with scroll opacity, desktop links, and mobile hamburger appears above the centered auth form
+- Dashboard top bar logo updated to `⬡` (blue hexagon icon) + "DevStash" text, matching the homepage nav style
+- No new components — changes localized to `sign-in/page.tsx`, `register/page.tsx`, and `dashboard-layout.tsx`
 
 ### 2026-05-15 — Stripe Phase 1: Core Infrastructure
 - Schema: added `subscriptionStatus`, `subscriptionPriceId`, `subscriptionCancelAt`, `subscriptionPeriodEnd` to `User`; migration `20260515130308_add_subscription_fields` applied to Neon `development`
@@ -373,4 +373,19 @@ Not Started
 - `src/components/items/item-card.tsx` — added a small `Copy` icon button in the `ml-auto` cluster alongside Star/Pin. On click: `e.stopPropagation()` (so the drawer doesn't open), copies `item.content` for TEXT items or `item.url` for URL items via `navigator.clipboard.writeText`, fires a sonner toast on success/failure
 - Hidden for FILE-type items (file/image) — nothing meaningful to copy as text; `ImageCard` and `FileRow` left as-is per spec
 - 77 Vitest tests pass; `npm run build` green
+
+### 2026-05-18 — Code Audit Fix Batch
+- **Security:** `updateItem` and `createItem` in `src/lib/db/items.ts` now verify every `collectionId` belongs to the caller before writing to `ItemCollection`, closing an authenticated cross-user write
+- **Security:** `GET /api/collections` now passes `session.user.id` to `getCollectionsForPicker`, which no longer falls back to the demo user
+- **Security:** `/api/files/[itemId]` `Content-Disposition` strips control + header-special chars (`"\r\n;,\\`) from the stored `fileName` and adds RFC 6266 `filename*=UTF-8''…` for full UTF-8 support, blocking header-injection via crafted filenames
+- **Perf/correctness:** added `slug String` + `@@index([userId, slug])` to `Collection` (migration `20260518000000_add_collection_slug` backfills via Postgres `regexp_replace`). `getCollectionBySlug(userId, slug)` is now a direct indexed `findFirst` — no more loading every collection with all items to filter in JS. Slug collisions also no longer silently return the wrong collection
+- **Perf:** `canCreateItem` / `canCreateCollection` collapsed from 2 sequential queries → 1 via `_count: { select: { items|collections: true } }`. Test mocks updated to the new shape
+- **Perf:** `getRecentCollections` / `getSidebarCollections` / `getAllCollections` no longer hydrate every item per collection. New private `getTypeBreakdowns(collectionIds)` issues a single flat `itemCollection.findMany` selecting only `itemTypeId/name/icon/color` and folds counts in memory; `buildMeta` derives `dominantColor`, `types`, and `itemCount` from it
+- **Cleanup:** entire `src/lib/db/collections.ts` refactored to take `userId` on every read; `getDemoUserId()` deleted. Call sites updated: `dashboard/page.tsx`, `collections/page.tsx`, `collections/[slug]/page.tsx`, `api/collections/route.ts` all now pass `session.user.id` (with auth-gated redirects on the page routes)
+- **Cleanup:** four near-identical `layout.tsx` files (`dashboard`, `items`, `collections`, `upgrade`) consolidated into a single shared `src/app/(dashboard)/layout.tsx` route group. URLs unchanged
+- **Cleanup:** `formatBytes` (duplicated 3×) extracted to `src/lib/format.ts`; `item-drawer.tsx`, `file-upload.tsx`, `file-row.tsx` now import it
+- **Cleanup:** `r2.ts` `buildObjectKey` local `ext` renamed to `safeName` to match what `safeFileName()` actually returns
+- **Cleanup:** `consumeVerificationToken` now records expiry first, then deletes — clearer intent comment that an expired token is still consumed to block replay
+- **next/image:** `<img>` tags pointing at the R2-proxy (`/api/files/[itemId]`) in `ImageCard` (gallery) and `ItemDrawer` (image preview) replaced with `next/image` `<Image fill sizes="…" unoptimized>` — `unoptimized` because the proxy is auth-gated and rotates per user
+- All 77 Vitest tests pass (`canCreateItem|Collection` mocks updated for the new `_count` shape); `npm run build` green
 

@@ -184,6 +184,14 @@ export async function updateItem(
   });
   if (!existing) return null;
 
+  if (data.collectionIds.length > 0) {
+    const owned = await prisma.collection.findMany({
+      where: { id: { in: data.collectionIds }, userId },
+      select: { id: true },
+    });
+    if (owned.length !== data.collectionIds.length) return null;
+  }
+
   await prisma.item.update({
     where: { id: itemId },
     data: {
@@ -236,6 +244,14 @@ export async function createItem(userId: string, data: CreateItemData): Promise<
     select: { id: true },
   });
   if (!itemType) return null;
+
+  if (data.collectionIds.length > 0) {
+    const owned = await prisma.collection.findMany({
+      where: { id: { in: data.collectionIds }, userId },
+      select: { id: true },
+    });
+    if (owned.length !== data.collectionIds.length) return null;
+  }
 
   const isFileType = data.type === 'file' || data.type === 'image';
   const contentType = data.type === 'link' ? 'URL' : isFileType ? 'FILE' : 'TEXT';

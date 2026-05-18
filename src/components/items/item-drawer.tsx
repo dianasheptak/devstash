@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Copy, Star, Pin, Pencil, Trash2, Download, FileIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ import { updateItem, deleteItem } from '@/actions/items';
 import { CodeEditor } from './code-editor';
 import { MarkdownEditor } from './markdown-editor';
 import { CollectionPicker, type CollectionOption } from './collection-picker';
+import { formatBytes } from '@/lib/format';
 import type { ItemDetail } from '@/lib/db/items';
 
 const CODE_TYPES = ['snippet', 'command'] as const;
@@ -282,12 +284,16 @@ function DrawerBody({
         {item.contentType === 'FILE' && item.fileUrl && (
           <Section label={item.itemType.name === 'image' ? 'Image' : 'File'}>
             {item.itemType.name === 'image' ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`/api/files/${item.id}`}
-                alt={item.fileName ?? item.title}
-                className="max-h-96 rounded border bg-muted object-contain w-full"
-              />
+              <div className="relative w-full h-96 rounded border bg-muted overflow-hidden">
+                <Image
+                  src={`/api/files/${item.id}`}
+                  alt={item.fileName ?? item.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 576px"
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
             ) : (
               <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
                 <div className="flex size-10 items-center justify-center rounded border bg-background">
@@ -557,10 +563,4 @@ function DrawerSkeleton() {
       <div className="h-16 w-full rounded bg-muted animate-pulse" />
     </div>
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }

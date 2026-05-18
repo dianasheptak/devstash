@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import type { CreateCollectionParsed, UpdateCollectionParsed } from '@/lib/validation/collection';
 import type { ItemWithMeta } from '@/lib/db/items';
 
-function toSlug(name: string): string {
+export function toSlug(name: string): string {
   return name
     .toLowerCase()
     .replace(/\s+/g, '-')
@@ -22,63 +22,95 @@ export type CollectionWithMeta = {
   dominantColor: string;
 };
 
-// TODO: replace hardcoded email with session user after auth is set up
-async function getDemoUserId(): Promise<string | null> {
-  const user = await prisma.user.findUnique({
-    where: { email: 'demo@devstash.io' },
-    select: { id: true },
+type TypeMeta = { name: string; icon: string; color: string };
+
+async function getTypeBreakdowns(
+  collectionIds: string[]
+): Promise<Map<string, { counts: Map<string, number>; types: Map<string, TypeMeta> }>> {
+  const result = new Map<
+    string,
+    { counts: Map<string, number>; types: Map<string, TypeMeta> }
+  >();
+  if (collectionIds.length === 0) return result;
+
+  const rows = await prisma.itemCollection.findMany({
+    where: { collectionId: { in: collectionIds } },
+    select: {
+      collectionId: true,
+      item: {
+        select: {
+          itemType: { select: { id: true, name: true, icon: true, color: true } },
+        },
+      },
+    },
   });
-  return user?.id ?? null;
+
+  for (const row of rows) {
+    let entry = result.get(row.collectionId);
+    if (!entry) {
+      entry = { counts: new Map(), types: new Map() };
+      result.set(row.collectionId, entry);
+    }
+    const t = row.item.itemType;
+    entry.counts.set(t.id, (entry.counts.get(t.id) ?? 0) + 1);
+    if (!entry.types.has(t.id)) {
+      entry.types.set(t.id, { name: t.name, icon: t.icon, color: t.color });
+    }
+  }
+  return result;
 }
 
-export async function getRecentCollections(limit = 6): Promise<CollectionWithMeta[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
+function buildMeta(
+  breakdown: { counts: Map<string, number>; types: Map<string, TypeMeta> } | undefined
+): { types: TypeMeta[]; dominantColor: string; itemCount: number } {
+  if (!breakdown) return { types: [], dominantColor: '#4b5563', itemCount: 0 };
+  const itemCount = Array.from(breakdown.counts.values()).reduce((a, b) => a + b, 0);
+  let dominantId: string | undefined;
+  let dominantCount = -1;
+  for (const [id, count] of breakdown.counts) {
+    if (count > dominantCount) {
+      dominantCount = count;
+      dominantId = id;
+    }
+  }
+  const dominantColor = dominantId
+    ? breakdown.types.get(dominantId)?.color ?? '#4b5563'
+    : '#4b5563';
+  return { types: Array.from(breakdown.types.values()), dominantColor, itemCount };
+}
 
+export async function getRecentCollections(
+  userId: string,
+  limit = 6
+): Promise<CollectionWithMeta[]> {
   const safeLimit = Math.min(Math.max(1, limit), 20);
 
   const collections = await prisma.collection.findMany({
     where: { userId },
     take: safeLimit,
     orderBy: { createdAt: 'desc' },
-    include: {
-      items: {
-        include: {
-          item: {
-            include: { itemType: true },
-          },
-        },
-      },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      isFavorite: true,
     },
   });
 
+  const breakdowns = await getTypeBreakdowns(collections.map((c) => c.id));
+
   return collections.map((col) => {
-    const itemTypes = col.items.map((ic) => ic.item.itemType);
-
-    const uniqueTypes = Array.from(
-      new Map(itemTypes.map((t) => [t.id, t])).values()
-    );
-
-    const typeCounts = itemTypes.reduce<Record<string, number>>((acc, t) => {
-      acc[t.id] = (acc[t.id] ?? 0) + 1;
-      return acc;
-    }, {});
-
-    const dominantTypeId = Object.entries(typeCounts)
-      .sort((a, b) => b[1] - a[1])[0]?.[0];
-
-    const dominantColor =
-      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? '#4b5563';
-
+    const meta = buildMeta(breakdowns.get(col.id));
     return {
       id: col.id,
       name: col.name,
-      slug: toSlug(col.name),
+      slug: col.slug,
       description: col.description,
       isFavorite: col.isFavorite,
-      itemCount: col.items.length,
-      types: uniqueTypes.map((t) => ({ name: t.name, icon: t.icon, color: t.color })),
-      dominantColor,
+      itemCount: meta.itemCount,
+      types: meta.types,
+      dominantColor: meta.dominantColor,
     };
   });
 }
@@ -92,46 +124,30 @@ export type SidebarCollection = {
   dominantColor: string;
 };
 
-export async function getSidebarCollections(limit = 20): Promise<SidebarCollection[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
-
+export async function getSidebarCollections(
+  userId: string,
+  limit = 20
+): Promise<SidebarCollection[]> {
   const safeLimit = Math.min(Math.max(1, limit), 50);
 
   const collections = await prisma.collection.findMany({
     where: { userId },
     take: safeLimit,
     orderBy: { createdAt: 'desc' },
-    include: {
-      items: {
-        include: {
-          item: {
-            include: { itemType: { select: { id: true, color: true } } },
-          },
-        },
-      },
-    },
+    select: { id: true, name: true, slug: true, isFavorite: true },
   });
 
-  return collections.map((col) => {
-    const itemTypes = col.items.map((ic) => ic.item.itemType);
-    const typeCounts = itemTypes.reduce<Record<string, { count: number; color: string }>>(
-      (acc, t) => {
-        if (!acc[t.id]) acc[t.id] = { count: 0, color: t.color };
-        acc[t.id].count++;
-        return acc;
-      },
-      {}
-    );
-    const dominantEntry = Object.values(typeCounts).sort((a, b) => b.count - a.count)[0];
+  const breakdowns = await getTypeBreakdowns(collections.map((c) => c.id));
 
+  return collections.map((col) => {
+    const meta = buildMeta(breakdowns.get(col.id));
     return {
       id: col.id,
       name: col.name,
-      slug: toSlug(col.name),
+      slug: col.slug,
       isFavorite: col.isFavorite,
-      itemCount: col.items.length,
-      dominantColor: dominantEntry?.color ?? '#4b5563',
+      itemCount: meta.itemCount,
+      dominantColor: meta.dominantColor,
     };
   });
 }
@@ -151,6 +167,7 @@ export async function createCollection(
   return prisma.collection.create({
     data: {
       name: data.name,
+      slug: toSlug(data.name),
       description: data.description,
       userId,
     },
@@ -170,10 +187,9 @@ export type CollectionPickerItem = {
   description: string | null;
 };
 
-export async function getCollectionsForPicker(): Promise<CollectionPickerItem[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
-
+export async function getCollectionsForPicker(
+  userId: string
+): Promise<CollectionPickerItem[]> {
   return prisma.collection.findMany({
     where: { userId },
     select: { id: true, name: true, description: true },
@@ -181,44 +197,34 @@ export async function getCollectionsForPicker(): Promise<CollectionPickerItem[]>
   });
 }
 
-export async function getAllCollections(): Promise<CollectionWithMeta[]> {
-  const userId = await getDemoUserId();
-  if (!userId) return [];
-
+export async function getAllCollections(
+  userId: string
+): Promise<CollectionWithMeta[]> {
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
-    include: {
-      items: {
-        include: {
-          item: {
-            include: { itemType: true },
-          },
-        },
-      },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      isFavorite: true,
     },
   });
 
-  return collections.map((col) => {
-    const itemTypes = col.items.map((ic) => ic.item.itemType);
-    const uniqueTypes = Array.from(new Map(itemTypes.map((t) => [t.id, t])).values());
-    const typeCounts = itemTypes.reduce<Record<string, number>>((acc, t) => {
-      acc[t.id] = (acc[t.id] ?? 0) + 1;
-      return acc;
-    }, {});
-    const dominantTypeId = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const dominantColor =
-      uniqueTypes.find((t) => t.id === dominantTypeId)?.color ?? '#4b5563';
+  const breakdowns = await getTypeBreakdowns(collections.map((c) => c.id));
 
+  return collections.map((col) => {
+    const meta = buildMeta(breakdowns.get(col.id));
     return {
       id: col.id,
       name: col.name,
-      slug: toSlug(col.name),
+      slug: col.slug,
       description: col.description,
       isFavorite: col.isFavorite,
-      itemCount: col.items.length,
-      types: uniqueTypes.map((t) => ({ name: t.name, icon: t.icon, color: t.color })),
-      dominantColor,
+      itemCount: meta.itemCount,
+      types: meta.types,
+      dominantColor: meta.dominantColor,
     };
   });
 }
@@ -227,12 +233,12 @@ export type CollectionPage = CollectionWithMeta & {
   items: ItemWithMeta[];
 };
 
-export async function getCollectionBySlug(slug: string): Promise<CollectionPage | null> {
-  const userId = await getDemoUserId();
-  if (!userId) return null;
-
-  const collections = await prisma.collection.findMany({
-    where: { userId },
+export async function getCollectionBySlug(
+  userId: string,
+  slug: string
+): Promise<CollectionPage | null> {
+  const col = await prisma.collection.findFirst({
+    where: { userId, slug },
     include: {
       items: {
         orderBy: [{ item: { isPinned: 'desc' } }, { addedAt: 'desc' }],
@@ -247,8 +253,6 @@ export async function getCollectionBySlug(slug: string): Promise<CollectionPage 
       },
     },
   });
-
-  const col = collections.find((c) => toSlug(c.name) === slug);
   if (!col) return null;
 
   const rawItems = col.items.map((ic) => ic.item);
@@ -265,7 +269,7 @@ export async function getCollectionBySlug(slug: string): Promise<CollectionPage 
   return {
     id: col.id,
     name: col.name,
-    slug: toSlug(col.name),
+    slug: col.slug,
     description: col.description,
     isFavorite: col.isFavorite,
     itemCount: rawItems.length,
@@ -302,7 +306,7 @@ export async function updateCollection(
 
   return prisma.collection.update({
     where: { id: collectionId },
-    data: { name: data.name, description: data.description },
+    data: { name: data.name, slug: toSlug(data.name), description: data.description },
     select: { id: true, name: true, description: true, isFavorite: true, createdAt: true },
   });
 }
@@ -319,10 +323,9 @@ export async function deleteCollection(
   await prisma.collection.delete({ where: { id: collectionId } });
 }
 
-export async function getCollectionStats(): Promise<{ total: number; favorites: number }> {
-  const userId = await getDemoUserId();
-  if (!userId) return { total: 0, favorites: 0 };
-
+export async function getCollectionStats(
+  userId: string
+): Promise<{ total: number; favorites: number }> {
   const [total, favorites] = await Promise.all([
     prisma.collection.count({ where: { userId } }),
     prisma.collection.count({ where: { userId, isFavorite: true } }),

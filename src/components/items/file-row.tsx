@@ -15,20 +15,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useItemDrawer } from './item-drawer-context';
+import { formatBytes } from '@/lib/format';
 import type { ItemWithMeta } from '@/lib/db/items';
-
-function formatBytes(bytes: number | null): string {
-  if (bytes == null) return '—';
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ['KB', 'MB', 'GB', 'TB'];
-  let value = bytes / 1024;
-  let i = 0;
-  while (value >= 1024 && i < units.length - 1) {
-    value /= 1024;
-    i++;
-  }
-  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[i]}`;
-}
 
 function formatDate(d: Date): string {
   return new Date(d).toLocaleDateString(undefined, {

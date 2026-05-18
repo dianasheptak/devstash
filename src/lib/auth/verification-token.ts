@@ -42,9 +42,12 @@ export async function consumeVerificationToken(rawToken: string): Promise<Consum
     return { ok: false, reason: "invalid" };
   }
 
+  const expired = record.expires < new Date();
+
+  // Consume the token in both cases so an expired token cannot be replayed.
   await prisma.verificationToken.delete({ where: { token: tokenHash } });
 
-  if (record.expires < new Date()) {
+  if (expired) {
     return { ok: false, reason: "expired" };
   }
   return { ok: true, email: record.identifier };

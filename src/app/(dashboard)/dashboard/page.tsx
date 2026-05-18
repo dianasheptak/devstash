@@ -17,8 +17,8 @@ export default async function DashboardPage() {
 
   const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
     await Promise.all([
-      getRecentCollections(),
-      getCollectionStats(),
+      getRecentCollections(userId),
+      getCollectionStats(userId),
       getPinnedItems(userId),
       getRecentItems(userId),
       getItemStats(userId),

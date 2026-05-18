@@ -1,11 +1,15 @@
 export const dynamic = 'force-dynamic';
 
+import { redirect } from 'next/navigation';
 import { FolderOpen } from 'lucide-react';
+import { auth } from '@/auth';
 import { getAllCollections } from '@/lib/db/collections';
 import { CollectionCard } from '@/components/collections/collection-card';
 
 export default async function CollectionsPage() {
-  const collections = await getAllCollections();
+  const session = await auth();
+  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/collections');
+  const collections = await getAllCollections(session.user.id);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

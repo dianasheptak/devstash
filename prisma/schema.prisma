@@ -145,6 +145,7 @@ model ItemType {
 model Collection {
   id          String   @id @default(cuid())
   name        String
+  slug        String
   description String?  @db.Text
   isFavorite  Boolean  @default(false)
   createdAt   DateTime @default(now())
@@ -158,6 +159,7 @@ model Collection {
   items ItemCollection[]
 
   @@index([userId])
+  @@index([userId, slug])
   @@map("collections")
 }
 

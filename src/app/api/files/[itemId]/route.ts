@@ -36,11 +36,18 @@ export async function GET(
   const url = new URL(request.url);
   const download = url.searchParams.get('download') === '1';
   const disposition = download ? 'attachment' : 'inline';
-  const safeName = (item.fileName ?? 'file').replace(/"/g, '');
+  const rawName = item.fileName ?? 'file';
+  // ASCII fallback: strip control + header-special chars, collapse non-printable
+  const asciiName = rawName.replace(/[^\x20-\x7E]/g, '_').replace(/["\r\n;,\\]/g, '_');
+  // RFC 6266 extended filename* for full UTF-8 support
+  const utf8Name = encodeURIComponent(rawName).replace(
+    /['()]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
 
   const headers = new Headers({
     'Content-Type': object.contentType ?? 'application/octet-stream',
-    'Content-Disposition': `${disposition}; filename="${safeName}"`,
+    'Content-Disposition': `${disposition}; filename="${asciiName}"; filename*=UTF-8''${utf8Name}`,
     'Cache-Control': 'private, max-age=0, no-store',
   });
   if (object.contentLength != null) {
