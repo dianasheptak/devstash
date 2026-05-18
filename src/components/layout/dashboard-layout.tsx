@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { Menu, PanelLeftClose, PanelLeftOpen, Plus, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { SidebarNav } from './sidebar-nav';
 import { ItemDrawerProvider } from '@/components/items/item-drawer-context';
 import { ItemDrawer } from '@/components/items/item-drawer';
 import { CreateItemProvider, useCreateItem } from '@/components/items/create-item-context';
 import { CreateCollectionProvider, useCreateCollection } from '@/components/collections/create-collection-context';
+import { CommandPaletteProvider, useCommandPalette } from '@/components/layout/command-palette';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { SidebarItemType } from '@/lib/db/items';
@@ -32,13 +32,15 @@ type Props = {
 export function DashboardLayout({ children, itemTypes, collections, user }: Props) {
   return (
     <ItemDrawerProvider>
-      <CreateItemProvider isPro={!!user.isPro}>
-        <CreateCollectionProvider>
-          <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
-            {children}
-          </DashboardLayoutInner>
-        </CreateCollectionProvider>
-      </CreateItemProvider>
+      <CommandPaletteProvider>
+        <CreateItemProvider isPro={!!user.isPro}>
+          <CreateCollectionProvider>
+            <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
+              {children}
+            </DashboardLayoutInner>
+          </CreateCollectionProvider>
+        </CreateItemProvider>
+      </CommandPaletteProvider>
     </ItemDrawerProvider>
   );
 }
@@ -46,6 +48,7 @@ export function DashboardLayout({ children, itemTypes, collections, user }: Prop
 function DashboardLayoutInner({ children, itemTypes, collections, user }: Props) {
   const { open: openCreate } = useCreateItem();
   const { open: openCreateCollection } = useCreateCollection();
+  const { open: openPalette } = useCommandPalette();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -73,10 +76,17 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
 
           {/* Center: search — desktop only */}
           <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 w-full max-w-sm px-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input placeholder="Search..." className="pl-9" />
-            </div>
+            <button
+              type="button"
+              onClick={openPalette}
+              className="relative w-full h-9 rounded-md border border-input bg-transparent pl-9 pr-2 text-left text-sm text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors cursor-pointer flex items-center"
+            >
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" />
+              <span>Search items and collections...</span>
+              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
           </div>
 
           {/* Right: action buttons */}
@@ -102,10 +112,14 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
 
         {/* Search row — mobile only */}
         <div className="lg:hidden px-4 pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input placeholder="Search..." className="pl-9" />
-          </div>
+          <button
+            type="button"
+            onClick={openPalette}
+            className="relative w-full h-9 rounded-md border border-input bg-transparent pl-9 pr-2 text-left text-sm text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors cursor-pointer flex items-center"
+          >
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" />
+            <span>Search...</span>
+          </button>
         </div>
       </header>
 
