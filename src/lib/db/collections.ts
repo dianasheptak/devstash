@@ -282,6 +282,8 @@ export async function getCollectionBySlug(slug: string): Promise<CollectionPage 
       isPinned: item.isPinned,
       language: item.language,
       createdAt: item.createdAt,
+      fileName: item.fileName,
+      fileSize: item.fileSize,
       itemType: item.itemType,
       tags: item.tags.map((t) => t.name),
     })),
