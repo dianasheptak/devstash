@@ -16,7 +16,13 @@ export function useCreateItem() {
   return ctx;
 }
 
-export function CreateItemProvider({ children }: { children: React.ReactNode }) {
+export function CreateItemProvider({
+  children,
+  isPro,
+}: {
+  children: React.ReactNode;
+  isPro: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [defaultType, setDefaultType] = useState<CreatableItemType | undefined>();
 
@@ -32,6 +38,7 @@ export function CreateItemProvider({ children }: { children: React.ReactNode }) 
         open={isOpen}
         onOpenChange={setIsOpen}
         defaultType={defaultType}
+        isPro={isPro}
       />
     </CreateItemContext.Provider>
   );

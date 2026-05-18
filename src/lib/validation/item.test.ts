@@ -94,8 +94,45 @@ describe('createItemSchema', () => {
   });
 
   it('rejects unknown type', () => {
-    const result = createItemSchema.safeParse({ ...baseSnippet, type: 'file' });
+    const result = createItemSchema.safeParse({ ...baseSnippet, type: 'bogus' });
     expect(result.success).toBe(false);
+  });
+
+  it('requires a file payload for file/image types', () => {
+    const result = createItemSchema.safeParse({
+      type: 'file',
+      title: 'A doc',
+      description: '',
+      content: '',
+      url: '',
+      language: '',
+      tags: [],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toEqual(['file']);
+    }
+  });
+
+  it('accepts a file type with file payload', () => {
+    const result = createItemSchema.safeParse({
+      type: 'image',
+      title: 'A pic',
+      description: '',
+      content: '',
+      url: '',
+      language: '',
+      tags: [],
+      file: {
+        fileUrl: 'r2://users/u1/abc.png',
+        fileName: 'abc.png',
+        fileSize: 1234,
+      },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.file?.fileName).toBe('abc.png');
+    }
   });
 
   it('rejects missing title', () => {

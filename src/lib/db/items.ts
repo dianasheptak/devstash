@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { deleteFromR2, objectKeyFromUrl } from '@/lib/r2';
 
 export type SidebarItemType = {
   id: string;
@@ -204,8 +205,17 @@ export async function updateItem(
   return getItemDetailById(userId, itemId);
 }
 
+export type CreatableType =
+  | 'snippet'
+  | 'prompt'
+  | 'command'
+  | 'note'
+  | 'link'
+  | 'file'
+  | 'image';
+
 export type CreateItemData = {
-  type: 'snippet' | 'prompt' | 'command' | 'note' | 'link';
+  type: CreatableType;
   title: string;
   description: string | null;
   content: string | null;
@@ -213,6 +223,7 @@ export type CreateItemData = {
   language: string | null;
   tags: string[];
   collectionIds: string[];
+  file: { fileUrl: string; fileName: string; fileSize: number } | null;
 };
 
 export async function createItem(userId: string, data: CreateItemData): Promise<ItemDetail | null> {
@@ -222,7 +233,8 @@ export async function createItem(userId: string, data: CreateItemData): Promise<
   });
   if (!itemType) return null;
 
-  const contentType = data.type === 'link' ? 'URL' : 'TEXT';
+  const isFileType = data.type === 'file' || data.type === 'image';
+  const contentType = data.type === 'link' ? 'URL' : isFileType ? 'FILE' : 'TEXT';
 
   const created = await prisma.item.create({
     data: {
@@ -231,9 +243,12 @@ export async function createItem(userId: string, data: CreateItemData): Promise<
       contentType,
       title: data.title,
       description: data.description,
-      content: data.type === 'link' ? null : data.content,
+      content: isFileType || data.type === 'link' ? null : data.content,
       url: data.type === 'link' ? data.url : null,
       language: data.type === 'snippet' || data.type === 'command' ? data.language : null,
+      fileUrl: isFileType ? data.file?.fileUrl ?? null : null,
+      fileName: isFileType ? data.file?.fileName ?? null : null,
+      fileSize: isFileType ? data.file?.fileSize ?? null : null,
       tags: {
         connectOrCreate: data.tags.map((name) => ({
           where: { name },
@@ -253,11 +268,21 @@ export async function createItem(userId: string, data: CreateItemData): Promise<
 export async function deleteItem(userId: string, itemId: string): Promise<boolean> {
   const existing = await prisma.item.findFirst({
     where: { id: itemId, userId },
-    select: { id: true },
+    select: { id: true, fileUrl: true },
   });
   if (!existing) return false;
 
   await prisma.item.delete({ where: { id: itemId } });
+
+  if (existing.fileUrl) {
+    const key = objectKeyFromUrl(existing.fileUrl);
+    if (key) {
+      deleteFromR2(key).catch((err) => {
+        console.error('Failed to delete R2 object', { key, err });
+      });
+    }
+  }
+
   return true;
 }
 

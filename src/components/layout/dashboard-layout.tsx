@@ -32,7 +32,7 @@ type Props = {
 export function DashboardLayout({ children, itemTypes, collections, user }: Props) {
   return (
     <ItemDrawerProvider>
-      <CreateItemProvider>
+      <CreateItemProvider isPro={!!user.isPro}>
         <CreateCollectionProvider>
           <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
             {children}
