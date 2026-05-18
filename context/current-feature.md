@@ -1,21 +1,12 @@
-# Current Feature: Pagination
+# Current Feature
 
 ## Status
 
-Completed
+Not Started
 
 ## Goals
 
-- Add pagination to `/items/[type]` and `/collections/[slug]` pages
-- Pagination controls at bottom with numbered page links + prev/next
-- Disable (grey out) prev/next when at boundaries
-- Use constants: `ITEMS_PER_PAGE = 21`, `COLLECTIONS_PER_PAGE = 21`
-- Dashboard limits: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
-- Fetch only the page slice from the DB — never load all rows and slice in memory
-
 ## Notes
-
-Spec: `context/features/pagination-spec.md`. Pagination applies to listing pages only; the dashboard keeps its existing capped queries (just route them through the new constants).
 
 
 
@@ -400,6 +391,13 @@ Spec: `context/features/pagination-spec.md`. Pagination applies to listing pages
 - **next/image:** `<img>` tags pointing at the R2-proxy (`/api/files/[itemId]`) in `ImageCard` (gallery) and `ItemDrawer` (image preview) replaced with `next/image` `<Image fill sizes="…" unoptimized>` — `unoptimized` because the proxy is auth-gated and rotates per user
 - All 77 Vitest tests pass (`canCreateItem|Collection` mocks updated for the new `_count` shape); `npm run build` green
 
+
+### 2026-05-18 — Settings Page
+- New `/settings` route at `src/app/(dashboard)/settings/page.tsx` — server component with `force-dynamic`, `auth()` gate redirecting unauthed users to `/sign-in?callbackUrl=/settings`; lightweight `prisma.user.findUnique` selecting only `email` + `password` to derive `hasPassword` for `ProfileActions`. Inherits the shared sidebar via the `(dashboard)` route group
+- `src/proxy.ts` — matcher extended with `/settings/:path*`
+- `src/components/layout/user-menu.tsx` — added "Settings" `Link` (lucide `Settings` icon) between Profile and Sign out in the upward dropdown popover
+- `src/app/profile/page.tsx` — removed the Account section and the `ProfileActions` import; existing `ChangePasswordDialog` + `DeleteAccountDialog` are now reached through `/settings` only
+- 87 Vitest tests pass; `npm run build` green
 
 ### 2026-05-18 — Global Search / Command Palette
 - Installed shadcn `command` component (cmdk-based) + `input-group`; existing `dialog.tsx` left in place

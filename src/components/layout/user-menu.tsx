@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { ChevronUp, LogOut, UserRound } from "lucide-react";
+import { ChevronUp, LogOut, Settings, UserRound } from "lucide-react";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +49,14 @@ export function UserMenu({ user, collapsed }: Props) {
           >
             <UserRound className="size-4" />
             Profile
+          </Link>
+          <Link
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 hover:bg-accent transition-colors"
+          >
+            <Settings className="size-4" />
+            Settings
           </Link>
           <button
             type="button"
