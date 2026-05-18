@@ -53,7 +53,7 @@ async function main() {
       email: "demo@devstash.io",
       name: "Demo User",
       password: hashedPassword,
-      isPro: true,
+      isPro: false,
       emailVerified: new Date(),
     },
   });
@@ -261,91 +261,6 @@ Show the refactored version with a brief explanation of each change.
   });
 
   // ============================================
-  // DEVOPS COLLECTION
-  // ============================================
-  console.log("Seeding DevOps collection...");
-  await prisma.collection.create({
-    data: {
-      name: "DevOps",
-      description: "Infrastructure and deployment resources",
-      userId: user.id,
-      items: {
-        create: [
-          {
-            item: {
-              create: {
-                title: "Next.js Dockerfile (Multi-stage)",
-                contentType: "TEXT",
-                language: "dockerfile",
-                description: "Production-ready multi-stage Dockerfile for Next.js with standalone output.",
-                userId: user.id,
-                itemTypeId: typeMap.snippet.id,
-                content: `FROM node:20-alpine AS base
-
-FROM base AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
-
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-EXPOSE 3000
-CMD ["node", "server.js"]`,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Deploy to Production",
-                contentType: "TEXT",
-                language: "bash",
-                description: "Push, migrate, build, and deploy in one command chain.",
-                userId: user.id,
-                itemTypeId: typeMap.command.id,
-                content: `git push origin main && npx prisma migrate deploy && docker build -t myapp . && docker push registry.example.com/myapp:latest`,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Docker Documentation",
-                contentType: "URL",
-                url: "https://docs.docker.com",
-                description: "Official Docker docs — engine, compose, networking, and volumes.",
-                userId: user.id,
-                itemTypeId: typeMap.link.id,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "GitHub Actions Docs",
-                contentType: "URL",
-                url: "https://docs.github.com/en/actions",
-                description: "Official GitHub Actions documentation for CI/CD workflows.",
-                userId: user.id,
-                itemTypeId: typeMap.link.id,
-              },
-            },
-          },
-        ],
-      },
-    },
-  });
-
-  // ============================================
   // TERMINAL COMMANDS COLLECTION
   // ============================================
   console.log("Seeding Terminal Commands collection...");
@@ -453,74 +368,10 @@ npm list -g --depth=0`,
     },
   });
 
-  // ============================================
-  // DESIGN RESOURCES COLLECTION
-  // ============================================
-  console.log("Seeding Design Resources collection...");
-  await prisma.collection.create({
-    data: {
-      name: "Design Resources",
-      description: "UI/UX resources and references",
-      userId: user.id,
-      items: {
-        create: [
-          {
-            item: {
-              create: {
-                title: "Tailwind CSS Docs",
-                contentType: "URL",
-                url: "https://tailwindcss.com/docs",
-                description: "Official Tailwind CSS v4 documentation — utilities, config, and plugins.",
-                userId: user.id,
-                itemTypeId: typeMap.link.id,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "shadcn/ui Components",
-                contentType: "URL",
-                url: "https://ui.shadcn.com",
-                description: "Accessible, unstyled component library built on Radix UI and Tailwind.",
-                userId: user.id,
-                itemTypeId: typeMap.link.id,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Radix UI Primitives",
-                contentType: "URL",
-                url: "https://www.radix-ui.com",
-                description: "Unstyled, accessible component primitives for building design systems.",
-                userId: user.id,
-                itemTypeId: typeMap.link.id,
-              },
-            },
-          },
-          {
-            item: {
-              create: {
-                title: "Lucide Icons",
-                contentType: "URL",
-                url: "https://lucide.dev",
-                description: "Beautiful & consistent open-source icon library with React support.",
-                userId: user.id,
-                itemTypeId: typeMap.link.id,
-              },
-            },
-          },
-        ],
-      },
-    },
-  });
-
   console.log("\nSeeding complete!");
   console.log(`  User:        demo@devstash.io`);
   console.log(`  Item types:  ${types.length}`);
-  console.log(`  Collections: 5`);
+  console.log(`  Collections: 3`);
 }
 
 main()
