@@ -40,9 +40,16 @@ export const CREATABLE_ITEM_TYPES = [
   'command',
   'note',
   'link',
+  'file',
+  'image',
 ] as const;
 
 export type CreatableItemType = (typeof CREATABLE_ITEM_TYPES)[number];
+
+const FILE_TYPES = ['file', 'image'] as const;
+type FileType = (typeof FILE_TYPES)[number];
+export const isFileItemType = (t: string): t is FileType =>
+  (FILE_TYPES as readonly string[]).includes(t);
 
 const requiredUrl = z
   .preprocess(
@@ -50,6 +57,12 @@ const requiredUrl = z
     z.string()
   )
   .refine((v) => /^https?:\/\/.+/i.test(v), 'Must be a valid URL');
+
+const filePayloadSchema = z.object({
+  fileUrl: z.string().min(1, 'fileUrl is required'),
+  fileName: z.string().min(1, 'fileName is required'),
+  fileSize: z.number().int().positive('fileSize must be positive'),
+});
 
 export const createItemSchema = z
   .object({
@@ -64,6 +77,7 @@ export const createItemSchema = z
       .default([])
       .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
     collectionIds: z.array(z.string()).default([]),
+    file: filePayloadSchema.nullable().optional().default(null),
   })
   .superRefine((data, ctx) => {
     if (data.type === 'link') {
@@ -73,6 +87,14 @@ export const createItemSchema = z
           code: 'custom',
           path: ['url'],
           message: parsed.error.issues[0]?.message ?? 'URL is required',
+        });
+      }
+    } else if (isFileItemType(data.type)) {
+      if (!data.file) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['file'],
+          message: 'File upload is required',
         });
       }
     } else {

@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Code, Sparkles, Terminal, StickyNote, Link as LinkIcon, type LucideIcon } from 'lucide-react';
+import { Code, Sparkles, Terminal, StickyNote, Link as LinkIcon, FileIcon, ImageIcon, type LucideIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import {
 import { CodeEditor } from './code-editor';
 import { MarkdownEditor } from './markdown-editor';
 import { CollectionPicker, type CollectionOption } from './collection-picker';
+import { FileUpload, type UploadedFile } from './file-upload';
 import { cn } from '@/lib/utils';
 
 const TYPE_META: Record<CreatableItemType, { icon: LucideIcon; color: string; label: string }> = {
@@ -31,15 +32,20 @@ const TYPE_META: Record<CreatableItemType, { icon: LucideIcon; color: string; la
   command: { icon: Terminal, color: '#f97316', label: 'Command' },
   note: { icon: StickyNote, color: '#fde047', label: 'Note' },
   link: { icon: LinkIcon, color: '#10b981', label: 'Link' },
+  file: { icon: FileIcon, color: '#6b7280', label: 'File' },
+  image: { icon: ImageIcon, color: '#ec4899', label: 'Image' },
 };
+
+const PRO_TYPES: CreatableItemType[] = ['file', 'image'];
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultType?: CreatableItemType;
+  isPro: boolean;
 };
 
-export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
+export function CreateItemDialog({ open, onOpenChange, defaultType, isPro }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [type, setType] = useState<CreatableItemType>(defaultType ?? 'snippet');
@@ -51,6 +57,7 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
   const [tags, setTags] = useState('');
   const [collectionIds, setCollectionIds] = useState<string[]>([]);
   const [collections, setCollections] = useState<CollectionOption[]>([]);
+  const [uploaded, setUploaded] = useState<UploadedFile | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -71,6 +78,8 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
     setLanguage('');
     setTags('');
     setCollectionIds([]);
+    if (uploaded?.previewUrl) URL.revokeObjectURL(uploaded.previewUrl);
+    setUploaded(null);
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -81,8 +90,14 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
   const showContent = type === 'snippet' || type === 'prompt' || type === 'command' || type === 'note';
   const showLanguage = type === 'snippet' || type === 'command';
   const showUrl = type === 'link';
+  const showFile = type === 'file' || type === 'image';
 
-  const canSubmit = title.trim().length > 0 && !pending;
+  const canSubmit =
+    title.trim().length > 0 && !pending && (!showFile || !!uploaded);
+
+  const visibleTypes = CREATABLE_ITEM_TYPES.filter(
+    (t) => isPro || !PRO_TYPES.includes(t)
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +116,13 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
           .map((t) => t.trim())
           .filter((t) => t.length > 0),
         collectionIds,
+        file: showFile && uploaded
+          ? {
+              fileUrl: uploaded.fileUrl,
+              fileName: uploaded.fileName,
+              fileSize: uploaded.fileSize,
+            }
+          : null,
       });
 
       if (result.success) {
@@ -120,7 +142,7 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
         <DialogHeader>
           <DialogTitle>New Item</DialogTitle>
           <DialogDescription>
-            Save a snippet, prompt, command, note, or link.
+            Save a snippet, prompt, command, note, link, file, or image.
           </DialogDescription>
         </DialogHeader>
 
@@ -128,7 +150,7 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-muted-foreground">Type</label>
             <div className="flex flex-wrap gap-1.5">
-              {CREATABLE_ITEM_TYPES.map((t) => {
+              {visibleTypes.map((t) => {
                 const meta = TYPE_META[t];
                 const Icon = meta.icon;
                 const selected = type === t;
@@ -224,6 +246,19 @@ export function CreateItemDialog({ open, onOpenChange, defaultType }: Props) {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://..."
                 type="url"
+              />
+            </div>
+          )}
+
+          {showFile && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {type === 'image' ? 'Image' : 'File'}
+              </label>
+              <FileUpload
+                kind={type === 'image' ? 'image' : 'file'}
+                value={uploaded}
+                onChange={setUploaded}
               />
             </div>
           )}

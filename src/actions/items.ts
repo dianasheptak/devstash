@@ -46,7 +46,17 @@ export async function createItem(
   }
 
   try {
-    const created = await createItemQuery(session.user.id, parsed.data);
+    const created = await createItemQuery(session.user.id, {
+      type: parsed.data.type,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      content: parsed.data.content,
+      url: parsed.data.url,
+      language: parsed.data.language,
+      tags: parsed.data.tags,
+      collectionIds: parsed.data.collectionIds,
+      file: parsed.data.file ?? null,
+    });
     if (!created) {
       return { success: false, error: 'Failed to create item' };
     }

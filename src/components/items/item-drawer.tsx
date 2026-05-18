@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Copy, Star, Pin, Pencil, Trash2 } from 'lucide-react';
+import { Copy, Star, Pin, Pencil, Trash2, Download, FileIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Sheet,
@@ -279,16 +279,39 @@ function DrawerBody({
           </Section>
         )}
 
-        {item.contentType === 'FILE' && (
-          <Section label="File">
-            <div className="text-sm text-muted-foreground">
-              {item.fileName ?? 'Unnamed file'}
-              {item.fileSize != null && (
-                <span className="ml-2 text-xs">
-                  ({formatBytes(item.fileSize)})
-                </span>
-              )}
-            </div>
+        {item.contentType === 'FILE' && item.fileUrl && (
+          <Section label={item.itemType.name === 'image' ? 'Image' : 'File'}>
+            {item.itemType.name === 'image' ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/files/${item.id}`}
+                alt={item.fileName ?? item.title}
+                className="max-h-96 rounded border bg-muted object-contain w-full"
+              />
+            ) : (
+              <div className="flex items-center gap-3 rounded-md border bg-muted/30 p-3">
+                <div className="flex size-10 items-center justify-center rounded border bg-background">
+                  <FileIcon className="size-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {item.fileName ?? 'Unnamed file'}
+                  </p>
+                  {item.fileSize != null && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatBytes(item.fileSize)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            <a
+              href={`/api/files/${item.id}?download=1`}
+              className="mt-2 inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
+              <Download className="size-3.5" />
+              Download
+            </a>
           </Section>
         )}
 
