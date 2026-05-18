@@ -10,10 +10,12 @@ import { ItemDrawer } from '@/components/items/item-drawer';
 import { CreateItemProvider, useCreateItem } from '@/components/items/create-item-context';
 import { CreateCollectionProvider, useCreateCollection } from '@/components/collections/create-collection-context';
 import { CommandPaletteProvider, useCommandPalette } from '@/components/layout/command-palette';
+import { EditorPreferencesProvider } from '@/components/items/editor-preferences-context';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
+import type { EditorPreferences } from '@/lib/validation/editor-preferences';
 
 type SidebarUser = {
   name?: string | null;
@@ -27,21 +29,29 @@ type Props = {
   itemTypes: SidebarItemType[];
   collections: SidebarCollection[];
   user: SidebarUser;
+  editorPrefs: EditorPreferences;
 };
 
-export function DashboardLayout({ children, itemTypes, collections, user }: Props) {
+export function DashboardLayout({ children, itemTypes, collections, user, editorPrefs }: Props) {
   return (
-    <ItemDrawerProvider>
-      <CommandPaletteProvider>
-        <CreateItemProvider isPro={!!user.isPro}>
-          <CreateCollectionProvider>
-            <DashboardLayoutInner itemTypes={itemTypes} collections={collections} user={user}>
-              {children}
-            </DashboardLayoutInner>
-          </CreateCollectionProvider>
-        </CreateItemProvider>
-      </CommandPaletteProvider>
-    </ItemDrawerProvider>
+    <EditorPreferencesProvider initialPrefs={editorPrefs}>
+      <ItemDrawerProvider>
+        <CommandPaletteProvider>
+          <CreateItemProvider isPro={!!user.isPro}>
+            <CreateCollectionProvider>
+              <DashboardLayoutInner
+                itemTypes={itemTypes}
+                collections={collections}
+                user={user}
+                editorPrefs={editorPrefs}
+              >
+                {children}
+              </DashboardLayoutInner>
+            </CreateCollectionProvider>
+          </CreateItemProvider>
+        </CommandPaletteProvider>
+      </ItemDrawerProvider>
+    </EditorPreferencesProvider>
   );
 }
 
