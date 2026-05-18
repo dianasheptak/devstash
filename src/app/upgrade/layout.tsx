@@ -6,13 +6,13 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { getSidebarCollections } from '@/lib/db/collections';
 import { getSystemItemTypes } from '@/lib/db/items';
 
-export default async function ItemsRootLayout({
+export default async function UpgradeRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/dashboard');
+  if (!session?.user?.id) redirect('/sign-in?callbackUrl=/upgrade');
 
   const [itemTypes, collections] = await Promise.all([
     getSystemItemTypes(session.user.id),

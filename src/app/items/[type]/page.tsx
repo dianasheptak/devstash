@@ -9,7 +9,6 @@ import { ItemCard } from '@/components/items/item-card';
 import { AddTypeButton } from '@/components/items/add-type-button';
 import { CREATABLE_ITEM_TYPES, type CreatableItemType } from '@/lib/validation/item';
 import { isProType } from '@/lib/billing/limits';
-import { UpgradeCard } from '@/components/billing/upgrade-card';
 
 const TYPE_LABEL_PLURAL: Record<string, string> = {
   snippet: 'Snippets',
@@ -33,6 +32,10 @@ export default async function ItemsByTypePage({
   const session = await auth();
   if (!session?.user?.id) redirect('/sign-in?callbackUrl=/dashboard');
 
+  if (isProType(typeName) && !session.user.isPro) {
+    redirect('/upgrade');
+  }
+
   const itemType = await prisma.itemType.findFirst({
     where: { name: typeName, isSystem: true },
     select: { icon: true, color: true },
@@ -41,26 +44,6 @@ export default async function ItemsByTypePage({
   const Icon = itemType ? ICON_MAP[itemType.icon] : null;
   const label = TYPE_LABEL_PLURAL[typeName];
   const isCreatable = (CREATABLE_ITEM_TYPES as readonly string[]).includes(typeName);
-  const isPro = session.user.isPro;
-
-  if (isProType(typeName) && !isPro) {
-    return (
-      <div className="space-y-6 max-w-2xl mx-auto">
-        <header className="flex items-center gap-3">
-          {Icon && itemType && (
-            <span className="size-6 shrink-0" style={{ color: itemType.color }}>
-              <Icon className="size-6" />
-            </span>
-          )}
-          <h1 className="text-2xl font-bold tracking-tight">{label}</h1>
-        </header>
-        <p className="text-sm text-muted-foreground">
-          {label} are a Pro feature. Upgrade to upload and organize {label.toLowerCase()} in your stash.
-        </p>
-        <UpgradeCard />
-      </div>
-    );
-  }
 
   const items = await getItemsByType(session.user.id, typeName);
 

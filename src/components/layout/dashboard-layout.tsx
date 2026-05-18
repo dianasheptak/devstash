@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, PanelLeftClose, PanelLeftOpen, Plus, Search } from 'lucide-react';
+import { Menu, PanelLeftClose, PanelLeftOpen, Plus, Search, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -19,6 +19,7 @@ type SidebarUser = {
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  isPro?: boolean;
 };
 
 type Props = {
@@ -80,6 +81,14 @@ function DashboardLayoutInner({ children, itemTypes, collections, user }: Props)
 
           {/* Right: action buttons */}
           <div className="ml-auto flex items-center gap-2 shrink-0">
+            {!user.isPro && (
+              <Link href="/upgrade">
+                <Button size="sm" variant="ghost" className="cursor-pointer text-muted-foreground hover:text-foreground">
+                  <Sparkles className="size-4" />
+                  <span className="hidden sm:inline">Upgrade</span>
+                </Button>
+              </Link>
+            )}
             <Button size="sm" variant="outline" onClick={() => openCreateCollection()} className="cursor-pointer">
               <Plus className="size-4" />
               <span className="hidden sm:inline">New Collection</span>

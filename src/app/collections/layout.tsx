@@ -23,6 +23,7 @@ export default async function CollectionsRootLayout({
     name: session.user.name ?? null,
     email: session.user.email ?? null,
     image: session.user.image ?? null,
+    isPro: session.user.isPro,
   };
 
   return (
