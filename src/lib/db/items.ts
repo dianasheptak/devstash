@@ -44,6 +44,8 @@ export type ItemWithMeta = {
   isPinned: boolean;
   language: string | null;
   createdAt: Date;
+  fileName: string | null;
+  fileSize: number | null;
   itemType: { name: string; icon: string; color: string };
   tags: string[];
 };
@@ -59,6 +61,8 @@ function mapItem(item: {
   isPinned: boolean;
   language: string | null;
   createdAt: Date;
+  fileName: string | null;
+  fileSize: number | null;
   itemType: { name: string; icon: string; color: string };
   tags: { name: string }[];
 }): ItemWithMeta {
@@ -73,6 +77,8 @@ function mapItem(item: {
     isPinned: item.isPinned,
     language: item.language,
     createdAt: item.createdAt,
+    fileName: item.fileName,
+    fileSize: item.fileSize,
     itemType: item.itemType,
     tags: item.tags.map((t) => t.name),
   };
@@ -121,8 +127,6 @@ export async function getItemsByType(userId: string, typeName: string): Promise<
 
 export type ItemDetail = ItemWithMeta & {
   fileUrl: string | null;
-  fileName: string | null;
-  fileSize: number | null;
   collections: { id: string; name: string }[];
 };
 

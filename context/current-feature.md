@@ -362,3 +362,10 @@ Not Started
 - `src/app/items/[type]/page.tsx` — when `typeName === 'image'`, renders `ImageCard` in a 3-column grid (1/2/3 responsive, `gap-4`); all other types keep the existing `ItemCard` 2-column layout unchanged
 - No `src/lib/**` changes; no schema or server-side changes. 77 Vitest tests pass; `npm run build` green
 
+### 2026-05-18 — File List View
+- New `src/components/items/file-row.tsx` — client `FileRow` renders a list row with extension-aware Lucide icon (`FileText`/`FileImage`/`FileVideo`/`FileAudio`/`FileArchive`/`FileCode`/`FileSpreadsheet`, fallback `File`), title + favorite/pin badges, the stored `fileName` shown beneath when it differs from the title, formatted file size + upload date, and a Download button linking to `/api/files/[itemId]?download=1` with `stopPropagation`. Row click opens the existing item drawer via `useItemDrawer()`; hover highlights via `bg-muted/40`; mobile stacks meta column under the title
+- `src/app/items/[type]/page.tsx` — when `typeName === 'file'`, renders `FileRow`s inside a `rounded-lg border overflow-hidden` container; image still uses the gallery, all other types keep the existing `ItemCard` 2-column grid
+- `src/lib/db/items.ts` — `ItemWithMeta` and `mapItem` now include `fileName` and `fileSize` so list rows can read them without an extra query; `ItemDetail` no longer redeclares those fields (inherited from `ItemWithMeta`)
+- `src/lib/db/collections.ts` — `getCollectionBySlug` passes `fileName`/`fileSize` through its inline `ItemWithMeta` mapper to keep the type check happy
+- 77 Vitest tests pass; `npm run build` green
+
