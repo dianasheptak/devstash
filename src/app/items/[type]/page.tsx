@@ -6,6 +6,7 @@ import { ICON_MAP, slugToTypeName } from '@/lib/constants/item-types';
 import { getItemsByType } from '@/lib/db/items';
 import { prisma } from '@/lib/prisma';
 import { ItemCard } from '@/components/items/item-card';
+import { ImageCard } from '@/components/items/image-card';
 import { AddTypeButton } from '@/components/items/add-type-button';
 import { CREATABLE_ITEM_TYPES, type CreatableItemType } from '@/lib/validation/item';
 import { isProType } from '@/lib/billing/limits';
@@ -71,6 +72,12 @@ export default async function ItemsByTypePage({
           <p className="text-sm text-muted-foreground">
             No {label.toLowerCase()} yet.
           </p>
+        </div>
+      ) : typeName === 'image' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {items.map((item) => (
+            <ImageCard key={item.id} item={item} />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
