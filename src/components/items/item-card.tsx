@@ -1,6 +1,7 @@
 'use client';
 
-import { Star, Pin } from 'lucide-react';
+import { Star, Pin, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ICON_MAP } from '@/lib/constants/item-types';
@@ -14,6 +15,20 @@ export function ItemCard({ item }: { item: ItemWithMeta }) {
     item.contentType === 'URL'
       ? item.url
       : item.content?.split('\n').slice(0, 2).join(' ').slice(0, 120);
+
+  const copyValue =
+    item.contentType === 'URL' ? item.url : item.contentType === 'TEXT' ? item.content : null;
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!copyValue) return;
+    try {
+      await navigator.clipboard.writeText(copyValue);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Failed to copy');
+    }
+  };
 
   return (
     <Card
@@ -30,16 +45,25 @@ export function ItemCard({ item }: { item: ItemWithMeta }) {
             </span>
           )}
           <CardTitle className="truncate">{item.title}</CardTitle>
-          {(item.isFavorite || item.isPinned) && (
-            <div className="ml-auto flex items-center gap-1 shrink-0">
-              {item.isFavorite && (
-                <Star className="size-3.5 fill-yellow-400 text-yellow-400" />
-              )}
-              {item.isPinned && (
-                <Pin className="size-3.5 text-muted-foreground" />
-              )}
-            </div>
-          )}
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
+            {item.isFavorite && (
+              <Star className="size-3.5 fill-yellow-400 text-yellow-400" />
+            )}
+            {item.isPinned && (
+              <Pin className="size-3.5 text-muted-foreground" />
+            )}
+            {copyValue && (
+              <button
+                type="button"
+                onClick={handleCopy}
+                aria-label="Copy to clipboard"
+                title="Copy to clipboard"
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded p-0.5 hover:bg-muted"
+              >
+                <Copy className="size-3.5" />
+              </button>
+            )}
+          </div>
         </div>
         {item.description && (
           <CardDescription>{item.description}</CardDescription>
