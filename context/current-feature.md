@@ -389,3 +389,13 @@ Not Started
 - **next/image:** `<img>` tags pointing at the R2-proxy (`/api/files/[itemId]`) in `ImageCard` (gallery) and `ItemDrawer` (image preview) replaced with `next/image` `<Image fill sizes="…" unoptimized>` — `unoptimized` because the proxy is auth-gated and rotates per user
 - All 77 Vitest tests pass (`canCreateItem|Collection` mocks updated for the new `_count` shape); `npm run build` green
 
+
+### 2026-05-18 — Global Search / Command Palette
+- Installed shadcn `command` component (cmdk-based) + `input-group`; existing `dialog.tsx` left in place
+- New `src/lib/db/items.ts` → `getSearchableItems(userId)` returns lightweight `{id, title, type, icon, color, preview}` (preview is first 120 chars of description/content/url, whitespace collapsed)
+- New `src/lib/db/collections.ts` → `getSearchableCollections(userId)` returns `{id, name, slug, itemCount}` via `_count`
+- New `GET /api/search` (`src/app/api/search/route.ts`) — auth-gated, returns `{items, collections}` in parallel
+- New `src/components/layout/command-palette.tsx` — `CommandPaletteProvider` + `useCommandPalette()`. Global `keydown` listener for ⌘K / Ctrl+K toggles open. Data lazy-fetched on first open and cached for the session. Results grouped under "Items" (type icon + title + preview) and "Collections" (folder icon + name + item count). Selecting an item calls `useItemDrawer().open(id)`; selecting a collection routes to `/collections/[slug]`. Children wrapped in `<Command>` inside `<CommandDialog>` because the shadcn dialog doesn't add the cmdk store wrapper itself
+- `src/components/layout/dashboard-layout.tsx` — `<CommandPaletteProvider>` mounted alongside the other providers; desktop and mobile search inputs replaced with buttons that open the palette; desktop button shows a ⌘K `<kbd>` hint
+- **Hydration fix:** `src/components/items/file-row.tsx` `formatDate` pinned to `'en-US'` (was `undefined` which auto-detected the client locale and caused a server/client mismatch under non-English browsers like `uk-UA`)
+- No schema changes; no new tests (UI-only feature plus thin DB helpers); 77 Vitest tests pass; `npm run build` green

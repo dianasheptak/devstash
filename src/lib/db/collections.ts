@@ -323,6 +323,35 @@ export async function deleteCollection(
   await prisma.collection.delete({ where: { id: collectionId } });
 }
 
+export type SearchableCollection = {
+  id: string;
+  name: string;
+  slug: string;
+  itemCount: number;
+};
+
+export async function getSearchableCollections(
+  userId: string
+): Promise<SearchableCollection[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      _count: { select: { items: true } },
+    },
+  });
+
+  return collections.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    itemCount: c._count.items,
+  }));
+}
+
 export async function getCollectionStats(
   userId: string
 ): Promise<{ total: number; favorites: number }> {

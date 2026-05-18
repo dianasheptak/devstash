@@ -19,7 +19,7 @@ import { formatBytes } from '@/lib/format';
 import type { ItemWithMeta } from '@/lib/db/items';
 
 function formatDate(d: Date): string {
-  return new Date(d).toLocaleDateString(undefined, {
+  return new Date(d).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

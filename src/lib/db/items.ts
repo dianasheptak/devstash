@@ -306,6 +306,43 @@ export async function deleteItem(userId: string, itemId: string): Promise<boolea
   return true;
 }
 
+export type SearchableItem = {
+  id: string;
+  title: string;
+  type: string;
+  icon: string;
+  color: string;
+  preview: string | null;
+};
+
+export async function getSearchableItems(userId: string): Promise<SearchableItem[]> {
+  const items = await prisma.item.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      url: true,
+      description: true,
+      itemType: { select: { name: true, icon: true, color: true } },
+    },
+  });
+
+  return items.map((i) => {
+    const raw = i.description ?? i.content ?? i.url ?? '';
+    const preview = raw ? raw.replace(/\s+/g, ' ').trim().slice(0, 120) : null;
+    return {
+      id: i.id,
+      title: i.title,
+      type: i.itemType.name,
+      icon: i.itemType.icon,
+      color: i.itemType.color,
+      preview,
+    };
+  });
+}
+
 export async function getItemStats(userId: string): Promise<{ total: number; favorites: number }> {
   const [total, favorites] = await Promise.all([
     prisma.item.count({ where: { userId } }),
