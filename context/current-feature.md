@@ -369,3 +369,8 @@ Not Started
 - `src/lib/db/collections.ts` — `getCollectionBySlug` passes `fileName`/`fileSize` through its inline `ItemWithMeta` mapper to keep the type check happy
 - 77 Vitest tests pass; `npm run build` green
 
+### 2026-05-18 — Quick Copy Icon on Cards
+- `src/components/items/item-card.tsx` — added a small `Copy` icon button in the `ml-auto` cluster alongside Star/Pin. On click: `e.stopPropagation()` (so the drawer doesn't open), copies `item.content` for TEXT items or `item.url` for URL items via `navigator.clipboard.writeText`, fires a sonner toast on success/failure
+- Hidden for FILE-type items (file/image) — nothing meaningful to copy as text; `ImageCard` and `FileRow` left as-is per spec
+- 77 Vitest tests pass; `npm run build` green
+
