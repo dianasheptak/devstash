@@ -197,12 +197,27 @@ export async function getCollectionsForPicker(
   });
 }
 
+export type PaginatedCollections = {
+  collections: CollectionWithMeta[];
+  total: number;
+  pageCount: number;
+  page: number;
+};
+
 export async function getAllCollections(
-  userId: string
-): Promise<CollectionWithMeta[]> {
+  userId: string,
+  { page, perPage }: { page: number; perPage: number }
+): Promise<PaginatedCollections> {
+  const where = { userId };
+  const total = await prisma.collection.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+
   const collections = await prisma.collection.findMany({
-    where: { userId },
+    where,
     orderBy: { createdAt: 'desc' },
+    skip: (safePage - 1) * perPage,
+    take: perPage,
     select: {
       id: true,
       name: true,
@@ -214,57 +229,63 @@ export async function getAllCollections(
 
   const breakdowns = await getTypeBreakdowns(collections.map((c) => c.id));
 
-  return collections.map((col) => {
-    const meta = buildMeta(breakdowns.get(col.id));
-    return {
-      id: col.id,
-      name: col.name,
-      slug: col.slug,
-      description: col.description,
-      isFavorite: col.isFavorite,
-      itemCount: meta.itemCount,
-      types: meta.types,
-      dominantColor: meta.dominantColor,
-    };
-  });
+  return {
+    collections: collections.map((col) => {
+      const meta = buildMeta(breakdowns.get(col.id));
+      return {
+        id: col.id,
+        name: col.name,
+        slug: col.slug,
+        description: col.description,
+        isFavorite: col.isFavorite,
+        itemCount: meta.itemCount,
+        types: meta.types,
+        dominantColor: meta.dominantColor,
+      };
+    }),
+    total,
+    pageCount,
+    page: safePage,
+  };
 }
 
 export type CollectionPage = CollectionWithMeta & {
   items: ItemWithMeta[];
+  pageCount: number;
+  page: number;
 };
 
 export async function getCollectionBySlug(
   userId: string,
-  slug: string
+  slug: string,
+  { page, perPage }: { page: number; perPage: number }
 ): Promise<CollectionPage | null> {
   const col = await prisma.collection.findFirst({
     where: { userId, slug },
+    select: { id: true, name: true, slug: true, description: true, isFavorite: true },
+  });
+  if (!col) return null;
+
+  const breakdowns = await getTypeBreakdowns([col.id]);
+  const meta = buildMeta(breakdowns.get(col.id));
+
+  const pageCount = Math.max(1, Math.ceil(meta.itemCount / perPage));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+
+  const rows = await prisma.itemCollection.findMany({
+    where: { collectionId: col.id },
+    orderBy: [{ item: { isPinned: 'desc' } }, { addedAt: 'desc' }],
+    skip: (safePage - 1) * perPage,
+    take: perPage,
     include: {
-      items: {
-        orderBy: [{ item: { isPinned: 'desc' } }, { addedAt: 'desc' }],
+      item: {
         include: {
-          item: {
-            include: {
-              itemType: { select: { name: true, icon: true, color: true } },
-              tags: { select: { name: true } },
-            },
-          },
+          itemType: { select: { name: true, icon: true, color: true } },
+          tags: { select: { name: true } },
         },
       },
     },
   });
-  if (!col) return null;
-
-  const rawItems = col.items.map((ic) => ic.item);
-  const itemTypes = rawItems.map((item) => item.itemType);
-  const uniqueTypes = Array.from(new Map(itemTypes.map((t) => [t.name, t])).values());
-  const typeCounts = itemTypes.reduce<Record<string, number>>((acc, t) => {
-    acc[t.name] = (acc[t.name] ?? 0) + 1;
-    return acc;
-  }, {});
-  const dominantTypeName = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const dominantColor =
-    uniqueTypes.find((t) => t.name === dominantTypeName)?.color ?? '#4b5563';
 
   return {
     id: col.id,
@@ -272,24 +293,26 @@ export async function getCollectionBySlug(
     slug: col.slug,
     description: col.description,
     isFavorite: col.isFavorite,
-    itemCount: rawItems.length,
-    types: uniqueTypes.map((t) => ({ name: t.name, icon: t.icon, color: t.color })),
-    dominantColor,
-    items: rawItems.map((item) => ({
-      id: item.id,
-      title: item.title,
-      contentType: item.contentType,
-      content: item.content,
-      url: item.url,
-      description: item.description,
-      isFavorite: item.isFavorite,
-      isPinned: item.isPinned,
-      language: item.language,
-      createdAt: item.createdAt,
-      fileName: item.fileName,
-      fileSize: item.fileSize,
-      itemType: item.itemType,
-      tags: item.tags.map((t) => t.name),
+    itemCount: meta.itemCount,
+    types: meta.types,
+    dominantColor: meta.dominantColor,
+    pageCount,
+    page: safePage,
+    items: rows.map((ic) => ({
+      id: ic.item.id,
+      title: ic.item.title,
+      contentType: ic.item.contentType,
+      content: ic.item.content,
+      url: ic.item.url,
+      description: ic.item.description,
+      isFavorite: ic.item.isFavorite,
+      isPinned: ic.item.isPinned,
+      language: ic.item.language,
+      createdAt: ic.item.createdAt,
+      fileName: ic.item.fileName,
+      fileSize: ic.item.fileSize,
+      itemType: ic.item.itemType,
+      tags: ic.item.tags.map((t) => t.name),
     })),
   };
 }

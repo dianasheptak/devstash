@@ -4,11 +4,13 @@ import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { ICON_MAP, slugToTypeName } from '@/lib/constants/item-types';
 import { getItemsByType } from '@/lib/db/items';
+import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/constants/pagination';
 import { prisma } from '@/lib/prisma';
 import { ItemCard } from '@/components/items/item-card';
 import { ImageCard } from '@/components/items/image-card';
 import { FileRow } from '@/components/items/file-row';
 import { AddTypeButton } from '@/components/items/add-type-button';
+import { Pagination } from '@/components/shared/pagination';
 import { CREATABLE_ITEM_TYPES, type CreatableItemType } from '@/lib/validation/item';
 import { isProType } from '@/lib/billing/limits';
 
@@ -24,8 +26,10 @@ const TYPE_LABEL_PLURAL: Record<string, string> = {
 
 export default async function ItemsByTypePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ type: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 }) {
   const { type: slug } = await params;
   const typeName = slugToTypeName(slug);
@@ -38,6 +42,9 @@ export default async function ItemsByTypePage({
     redirect('/upgrade');
   }
 
+  const { page: pageParam } = await searchParams;
+  const page = parsePageParam(pageParam);
+
   const itemType = await prisma.itemType.findFirst({
     where: { name: typeName, isSystem: true },
     select: { icon: true, color: true },
@@ -47,7 +54,11 @@ export default async function ItemsByTypePage({
   const label = TYPE_LABEL_PLURAL[typeName];
   const isCreatable = (CREATABLE_ITEM_TYPES as readonly string[]).includes(typeName);
 
-  const items = await getItemsByType(session.user.id, typeName);
+  const { items, total, pageCount, page: currentPage } = await getItemsByType(
+    session.user.id,
+    typeName,
+    { page, perPage: ITEMS_PER_PAGE }
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -59,7 +70,7 @@ export default async function ItemsByTypePage({
         )}
         <h1 className="text-2xl font-bold tracking-tight">{label}</h1>
         <span className="text-sm text-muted-foreground">
-          {items.length} {items.length === 1 ? 'item' : 'items'}
+          {total} {total === 1 ? 'item' : 'items'}
         </span>
         {isCreatable && (
           <div className="ml-auto">
@@ -93,6 +104,8 @@ export default async function ItemsByTypePage({
           ))}
         </div>
       )}
+
+      <Pagination basePath={`/items/${slug}`} page={currentPage} pageCount={pageCount} />
     </div>
   );
 }

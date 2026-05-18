@@ -5,6 +5,10 @@ import { Star, LayoutGrid, FolderOpen } from 'lucide-react';
 import { auth } from '@/auth';
 import { getRecentCollections, getCollectionStats } from '@/lib/db/collections';
 import { getPinnedItems, getRecentItems, getItemStats } from '@/lib/db/items';
+import {
+  DASHBOARD_COLLECTIONS_LIMIT,
+  DASHBOARD_RECENT_ITEMS_LIMIT,
+} from '@/lib/constants/pagination';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { SectionHeading } from '@/components/shared/section-heading';
 import { ItemCard } from '@/components/items/item-card';
@@ -17,10 +21,10 @@ export default async function DashboardPage() {
 
   const [recentCollections, collectionStats, pinnedItems, recentItems, itemStats] =
     await Promise.all([
-      getRecentCollections(userId),
+      getRecentCollections(userId, DASHBOARD_COLLECTIONS_LIMIT),
       getCollectionStats(userId),
       getPinnedItems(userId),
-      getRecentItems(userId),
+      getRecentItems(userId, DASHBOARD_RECENT_ITEMS_LIMIT),
       getItemStats(userId),
     ]);
 

@@ -3,18 +3,28 @@ export const dynamic = 'force-dynamic';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { getCollectionBySlug } from '@/lib/db/collections';
+import { ITEMS_PER_PAGE, parsePageParam } from '@/lib/constants/pagination';
 import { ItemCard } from '@/components/items/item-card';
 import { CollectionActions } from '@/components/collections/collection-actions';
+import { Pagination } from '@/components/shared/pagination';
 
 export default async function CollectionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/sign-in?callbackUrl=/collections');
   const { slug } = await params;
-  const collection = await getCollectionBySlug(session.user.id, slug);
+  const { page: pageParam } = await searchParams;
+  const page = parsePageParam(pageParam);
+
+  const collection = await getCollectionBySlug(session.user.id, slug, {
+    page,
+    perPage: ITEMS_PER_PAGE,
+  });
   if (!collection) notFound();
 
   return (
@@ -56,6 +66,12 @@ export default async function CollectionPage({
           ))}
         </div>
       )}
+
+      <Pagination
+        basePath={`/collections/${slug}`}
+        page={collection.page}
+        pageCount={collection.pageCount}
+      />
     </div>
   );
 }
