@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { LayoutGrid, FolderOpen, CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import { getProfileData } from "@/lib/db/profile";
 import { ICON_MAP } from "@/lib/constants/item-types";
@@ -45,11 +47,18 @@ export default async function ProfilePage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12 space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your account information and usage.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Your account information and usage.
+          </p>
+        </div>
+        <Button variant="outline" className="flex" size="sm">
+          <Link href="/dashboard">
+            Back to dashboard
+          </Link>
+        </Button>
       </div>
 
       <Card>
