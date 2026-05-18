@@ -38,10 +38,10 @@ function safeFileName(name: string): string {
 }
 
 export function buildObjectKey(userId: string, fileName: string): string {
-  const ext = safeFileName(fileName);
+  const safeName = safeFileName(fileName);
   const random = randomBytes(8).toString('hex');
   const now = Date.now();
-  return `users/${userId}/${now}-${random}-${ext}`;
+  return `users/${userId}/${now}-${random}-${safeName}`;
 }
 
 export async function uploadToR2(params: {

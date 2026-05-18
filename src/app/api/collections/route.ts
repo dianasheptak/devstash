@@ -8,6 +8,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const collections = await getCollectionsForPicker();
+  const collections = await getCollectionsForPicker(session.user.id);
   return NextResponse.json({ collections });
 }

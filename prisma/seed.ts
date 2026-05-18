@@ -65,6 +65,7 @@ async function main() {
   await prisma.collection.create({
     data: {
       name: "React Patterns",
+      slug: "react-patterns",
       description: "Reusable React patterns and hooks",
       userId: user.id,
       items: {
@@ -181,6 +182,7 @@ export function sleep(ms: number): Promise<void> {
   await prisma.collection.create({
     data: {
       name: "AI Workflows",
+      slug: "ai-workflows",
       description: "AI prompts and workflow automations",
       userId: user.id,
       items: {
@@ -267,6 +269,7 @@ Show the refactored version with a brief explanation of each change.
   await prisma.collection.create({
     data: {
       name: "Terminal Commands",
+      slug: "terminal-commands",
       description: "Useful shell skills for everyday development",
       userId: user.id,
       items: {

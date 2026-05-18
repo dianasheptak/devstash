@@ -5,8 +5,6 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: { findUnique: vi.fn() },
-    item: { count: vi.fn() },
-    collection: { count: vi.fn() },
   },
 }));
 
@@ -19,8 +17,6 @@ import {
 import { prisma } from "@/lib/prisma";
 
 const mockUserFind = prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>;
-const mockItemCount = prisma.item.count as unknown as ReturnType<typeof vi.fn>;
-const mockCollectionCount = prisma.collection.count as unknown as ReturnType<typeof vi.fn>;
 
 describe("isProType", () => {
   it("returns true for file and image", () => {
@@ -43,23 +39,26 @@ describe("canCreateItem", () => {
     vi.clearAllMocks();
   });
 
-  it("allows Pro users without counting", async () => {
-    mockUserFind.mockResolvedValue({ isPro: true });
+  it("allows Pro users", async () => {
+    mockUserFind.mockResolvedValue({ isPro: true, _count: { items: 999 } });
     const result = await canCreateItem("u1");
     expect(result).toEqual({ allowed: true });
-    expect(mockItemCount).not.toHaveBeenCalled();
   });
 
   it("allows free users under the limit", async () => {
-    mockUserFind.mockResolvedValue({ isPro: false });
-    mockItemCount.mockResolvedValue(FREE_LIMITS.items - 1);
+    mockUserFind.mockResolvedValue({
+      isPro: false,
+      _count: { items: FREE_LIMITS.items - 1 },
+    });
     const result = await canCreateItem("u1");
     expect(result).toEqual({ allowed: true });
   });
 
   it("blocks free users at the limit with a reason", async () => {
-    mockUserFind.mockResolvedValue({ isPro: false });
-    mockItemCount.mockResolvedValue(FREE_LIMITS.items);
+    mockUserFind.mockResolvedValue({
+      isPro: false,
+      _count: { items: FREE_LIMITS.items },
+    });
     const result = await canCreateItem("u1");
     expect(result.allowed).toBe(false);
     if (!result.allowed) {
@@ -74,23 +73,26 @@ describe("canCreateCollection", () => {
     vi.clearAllMocks();
   });
 
-  it("allows Pro users without counting", async () => {
-    mockUserFind.mockResolvedValue({ isPro: true });
+  it("allows Pro users", async () => {
+    mockUserFind.mockResolvedValue({ isPro: true, _count: { collections: 999 } });
     const result = await canCreateCollection("u1");
     expect(result).toEqual({ allowed: true });
-    expect(mockCollectionCount).not.toHaveBeenCalled();
   });
 
   it("allows free users under the limit", async () => {
-    mockUserFind.mockResolvedValue({ isPro: false });
-    mockCollectionCount.mockResolvedValue(FREE_LIMITS.collections - 1);
+    mockUserFind.mockResolvedValue({
+      isPro: false,
+      _count: { collections: FREE_LIMITS.collections - 1 },
+    });
     const result = await canCreateCollection("u1");
     expect(result).toEqual({ allowed: true });
   });
 
   it("blocks free users at the limit with a reason", async () => {
-    mockUserFind.mockResolvedValue({ isPro: false });
-    mockCollectionCount.mockResolvedValue(FREE_LIMITS.collections);
+    mockUserFind.mockResolvedValue({
+      isPro: false,
+      _count: { collections: FREE_LIMITS.collections },
+    });
     const result = await canCreateCollection("u1");
     expect(result.allowed).toBe(false);
     if (!result.allowed) {

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Star, Pin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useItemDrawer } from './item-drawer-context';
@@ -15,11 +16,13 @@ export function ImageCard({ item }: { item: ItemWithMeta }) {
       className="group hover:ring-foreground/20 hover:ring-1 transition-shadow cursor-pointer overflow-hidden p-0 gap-0"
     >
       <div className="relative aspect-video overflow-hidden bg-muted">
-        <img
+        <Image
           src={`/api/files/${item.id}`}
           alt={item.title}
-          loading="lazy"
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          unoptimized
         />
         {(item.isFavorite || item.isPinned) && (
           <div className="absolute top-2 right-2 flex items-center gap-1">

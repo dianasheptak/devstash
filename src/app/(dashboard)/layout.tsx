@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { getSidebarCollections } from '@/lib/db/collections';
 import { getSystemItemTypes } from '@/lib/db/items';
 
-export default async function ItemsRootLayout({
+export default async function DashboardGroupLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export default async function ItemsRootLayout({
 
   const [itemTypes, collections] = await Promise.all([
     getSystemItemTypes(session.user.id),
-    getSidebarCollections(),
+    getSidebarCollections(session.user.id),
   ]);
 
   const user = {

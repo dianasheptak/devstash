@@ -5,6 +5,7 @@ import { UploadCloud, X, FileIcon, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatBytes } from '@/lib/format';
 import {
   IMAGE_EXTENSIONS,
   FILE_EXTENSIONS,
@@ -197,10 +198,4 @@ export function FileUpload({ kind, value, onChange }: Props) {
       />
     </div>
   );
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
