@@ -357,3 +357,8 @@ Not Started
 - 77 Vitest tests pass; `npm run build` green
 - **Out of scope (deferred):** editing/replacing the file on an existing file/image item from the drawer's edit mode (display mode still shows the file). Rate limiting on `/api/upload` not added — login/register limiters cover account-creation abuse; per-account upload throttling could be a follow-up
 
+### 2026-05-18 — Image Gallery View
+- New `src/components/items/image-card.tsx` — client `ImageCard` that renders an `aspect-video` thumbnail via the existing `/api/files/[itemId]` proxy, `object-cover` fill, group-hover `scale-105` with `duration-300` transition, favorite/pin badges overlaid top-right, and a title strip below. Click opens the existing item drawer via `useItemDrawer()`
+- `src/app/items/[type]/page.tsx` — when `typeName === 'image'`, renders `ImageCard` in a 3-column grid (1/2/3 responsive, `gap-4`); all other types keep the existing `ItemCard` 2-column layout unchanged
+- No `src/lib/**` changes; no schema or server-side changes. 77 Vitest tests pass; `npm run build` green
+
